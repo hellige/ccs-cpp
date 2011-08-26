@@ -1,0 +1,8 @@
+/dist
+/include
+/lib
+/out
+/resources.tar.gz
+/.headers_copied
+/.tests_passed
+/.fig_done_*

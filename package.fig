@@ -1,0 +1,18 @@
+archive "resources.tar.gz"
+
+retrieve LIBPATH->lib
+retrieve INCLUDEPATH->include
+
+config default
+  append LIBPATH=@/dist/lib/libccs.so
+  append LIBPATH=@/dist/lib/libccs.a
+  append INCLUDEPATH=@/dist/include//ccs
+end
+
+config build
+  include boost/1.44.0.redhat5
+end
+
+config test
+  include gmock/1.4.0
+end

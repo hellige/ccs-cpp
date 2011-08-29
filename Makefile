@@ -18,19 +18,21 @@ LIB_PATH=$(if $(GCC_HOME),$(GCC_HOME)/lib64:,)lib
 
 PLATCFLAGS =
 PLATLDFLAGS =
+PLATSOFLAGS =
 PLATLIBS =
+CP = cp -a
 
 system := $(shell uname)
 ifeq ($(system),Linux)
     PLATCFLAGS = -fpic
     PLATLIBS = -lrt
+    PLATLDFLAGS = -rdynamic
 endif
 ifeq ($(system),Darwin)
-    DARWIN_ARCH = x86_64 # i386
-#    PLATCFLAGS = -fPIC -arch $(DARWIN_ARCH) -I/opt/local/include
     PLATCFLAGS = -fPIC -m64 -I/opt/local/include
-    PLATLIBS =
-    PLATLDFLAGS = -arch $(DARWIN_ARCH) -L/opt/local/lib
+    PLATLDFLAGS = -m64 -L/opt/local/lib
+    PLATSOFLAGS = -dynamiclib
+    CP = cp -R
 endif
 
 CXX = $(CCACHE) $(if $(GCC_HOME),$(GCC_HOME)/bin/,)g++ 
@@ -88,12 +90,12 @@ $(LIB_A): $(MAIN_O)
 
 $(LIB_SO): $(MAIN_O)
 	@mkdir -p $(dir $@)
-	$(CXX) -o $@ -rdynamic -shared $(PLATLDFLAGS) $^ $(LIBS)
+	$(CXX) -o $@ -shared $(PLATSOFLAGS) $(PLATLDFLAGS) $^ $(LIBS)
 
 $(CP_INCLUDE): $(shell find $(API_DIR) -name '*.h')
 	-@$(RM) -r $(INCLUDE_OUT)
 	@mkdir -p $(INCLUDE_OUT)
-	cp -a $(API_DIR)/* $(INCLUDE_OUT)
+	$(CP) $(API_DIR)/* $(INCLUDE_OUT)
 	touch $(CP_INCLUDE)
 
 $(API_HC):out/api/%.hc: $(API_DIR)/%.h $(FIG_DEP)

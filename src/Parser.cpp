@@ -10,32 +10,50 @@ namespace ccs {
 namespace {
 
 template <typename Iterator>
-struct ccs_grammar : qi::grammar<Iterator>
-{
+struct skip_grammar : qi::grammar<Iterator> {
+  skip_grammar() : skip_grammar::base_type(start) {
+    blockComment = "/*" >> *(blockComment | (qi::char_ - "*/")) >> "*/";
+    start = blockComment
+          | "//" >> *(qi::char_ - qi::eol) >> (qi::eol | qi::eoi)
+          | qi::space;
+  }
+
+  qi::rule<Iterator> blockComment;
+  qi::rule<Iterator> start;
+};
+
+template <typename Iterator>
+struct ccs_grammar : qi::grammar<Iterator, skip_grammar<Iterator>> {
+  typedef qi::rule<Iterator, skip_grammar<Iterator> > spacerule;
+  typedef qi::rule<Iterator> nospacerule;
+
+  nospacerule ident;
+  spacerule directive;
+  spacerule property;
+  spacerule selector;
+  nospacerule step;
+  nospacerule stepsuffix;
+  spacerule rule;
+  spacerule file;
+
   ccs_grammar() : ccs_grammar::base_type(file) {
     using qi::lit;
+    using qi::char_;
 
-    directive = lit("@include") >> '(' >> ')';
-    property = lit("prop") >> '=' >> lit("val");
+    ident = +char_("A-Za-z0-9$_");
+    directive = lit("@import") >> lit("file") >> -lit(';');
+    property = ident >> '=' >> lit("val") >> -lit(';');
     selector = step >> '>' >> selector
              | step >> selector
              | step;
-    step = lit("elem") >> stepsuffix
+    step = ident >> -stepsuffix
          | stepsuffix;
-    stepsuffix = '.' >> lit("class") >> -stepsuffix
+    stepsuffix = '.' >> ident >> -stepsuffix
                | ':' >> lit("pseudo") >> -stepsuffix
-               | '#' >> lit("id") >> -stepsuffix;
-    rule = property | (selector >> '{' >> +rule >> '}');
+               | '#' >> ident >> -stepsuffix;
+    rule = property | (selector >> '{' >> +rule >> '}' >>  -lit(';'));
     file = *(rule | directive);
   }
-
-  qi::rule<Iterator> directive;
-  qi::rule<Iterator> property;
-  qi::rule<Iterator> selector;
-  qi::rule<Iterator> step;
-  qi::rule<Iterator> stepsuffix;
-  qi::rule<Iterator> rule;
-  qi::rule<Iterator> file;
 };
 
 }
@@ -43,7 +61,9 @@ struct ccs_grammar : qi::grammar<Iterator>
 
 bool Parser::parseString(std::string input) {
   auto iter = input.begin();
-  bool r = qi::parse(iter, input.end(), ccs_grammar<std::string::iterator>());
+  skip_grammar<typeof(iter)> skip;
+  ccs_grammar<typeof(iter)> grammar;
+  bool r = qi::phrase_parse(iter, input.end(), grammar, skip);
 
   if (r && iter == input.end()) {
     std::cout << "Parsing succeeded\n";

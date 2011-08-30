@@ -1,10 +1,10 @@
-#ifndef NODE_H_
-#define NODE_H_
+#ifndef CCS_NODE_H_
+#define CCS_NODE_H_
 
+#include <map>
 #include <memory>
 #include <string>
 #include <vector>
-#include <unordered_map>
 
 #include "Key.h"
 
@@ -13,9 +13,9 @@ namespace ccs {
 class Property {};
 
 class Node {
-  std::unordered_map<Key, std::shared_ptr<Node>> children;
-  std::unordered_map<std::string, std::vector<Property>> props;
-  std::unordered_map<std::string, std::vector<Property>> localProps;
+  std::map<Key, std::shared_ptr<Node>> children;
+  std::multimap<std::string, Property> props;
+  std::multimap<std::string, Property> localProps;
 
 public:
   Node ();
@@ -23,4 +23,4 @@ public:
 
 } /* namespace ccs */
 
-#endif /* NODE_H_ */
+#endif /* CCS_NODE_H_ */

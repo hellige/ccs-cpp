@@ -1,10 +1,3 @@
-/*
- * Node.cpp
- *
- *  Created on: Aug 29, 2011
- *      Author: mhellige
- */
-
 #include "Node.h"
 
 namespace ccs {

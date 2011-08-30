@@ -3,7 +3,17 @@
 
 namespace ccs {
 
+class Node;
 
+class CcsDomain {
+  Node *root_;
+
+public:
+  CcsDomain();
+  ~CcsDomain();
+  CcsDomain(const CcsDomain &) = delete;
+  CcsDomain &operator=(const CcsDomain &) = delete;
+};
 
 }
 

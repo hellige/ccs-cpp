@@ -5,9 +5,12 @@
 
 namespace ccs {
 
+class Node;
+
 class Parser {
 public:
   bool parseString(std::string input);
+  bool parseString(Node &root, std::string input);
 };
 
 }

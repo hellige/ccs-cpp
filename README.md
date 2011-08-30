@@ -1,12 +1,19 @@
-C++ Library Skeleton
-====================
+CCS for C++
+===========
 
-This is a skeleton project for a C++ library. There's really nothing here
-other than the build, some stub files, Eclipse stuff and some infrastructure...
+This is a C++ implementation of [CCS][1]. 
 
-Adapting For Your Project
--------------------------
+    [1]: http://github.com/hellige/ccs
 
-A few things will need to be changed in the Makefile and package.fig, and the
-directory api/ccs will need to be renamed.
 
+TODO
+----
+
+* Support or-conditions in selectors via comma operator (as in CSS).
+
+* Support nested rules, perhaps via "local activation of global rule."
+
+* Aggregate values: lists, maps.
+
+* For aggregate values, allow modification of inherited value as well as
+  replacement??

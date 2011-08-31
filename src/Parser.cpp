@@ -56,7 +56,7 @@ struct ccs_grammar : qi::grammar<Iterator, skip_grammar<Iterator>> {
     selector = step >> '>' >> selector
              | step >> selector
              | step;
-    step = ident >> -stepsuffix
+    step = ('*' | ident) >> -stepsuffix
          | stepsuffix;
     auto pseudo = lit("root");
     stepsuffix = '.' >> ident >> -stepsuffix

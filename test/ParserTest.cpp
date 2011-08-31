@@ -18,6 +18,7 @@ TEST(ParserTest, BasicPhrases) {
   EXPECT_FALSE(parser.parseString(".class.class : root > elem#id {prop=0xab12}"));
   EXPECT_FALSE(parser.parseString("blah"));
   EXPECT_TRUE(parser.parseString("elem#id { prop = 'val'; prop2 = 31337 }"));
+  EXPECT_TRUE(parser.parseString("*:root > * foo *.blah { p = 1; }"));
 }
 
 TEST(ParserTest, Comments) {

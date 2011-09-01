@@ -4,9 +4,8 @@
 
 namespace ccs {
 
-CcsDomain::CcsDomain() {
-  root_ = new Node();
-}
+CcsDomain::CcsDomain() :
+  root_(new Node()), nextPropertyNumber_(0) {}
 
 CcsDomain::~CcsDomain() {
   delete root_;

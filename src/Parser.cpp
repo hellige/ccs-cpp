@@ -1,26 +1,44 @@
 #include "Parser.h"
 
 #include <iostream>
+#include <unordered_map>
+#include <vector>
 #include <boost/spirit/include/qi.hpp>
 
 #include "Node.h"
 
+using namespace std;
 namespace qi = boost::spirit::qi;
 namespace phoenix = boost::phoenix;
 
 namespace ccs {
 
+struct Selector {};
+struct Rule {
+  Selector selector;
+  vector<Rule> nestedRules;
+  unordered_map<string, Property> properties;
+};
+
+struct Ruleset {
+  Selector context;
+  vector<Rule> rules;
+};
+
+
 namespace {
 
 template <typename Iterator>
 struct ccs_grammar : qi::grammar<Iterator, qi::rule<Iterator>> {
-  typedef qi::rule<Iterator, qi::rule<Iterator>> spacerule;
-  typedef qi::rule<Iterator> nospacerule;
+  typedef Iterator I;
+  typedef qi::rule<I> nospacerule;
 
   nospacerule blockComment;
   nospacerule skipper;
 
-  nospacerule ident;
+  typedef qi::rule<I, typeof(skipper)> spacerule;
+
+  qi::rule<I, string()> ident;
   spacerule property;
   spacerule selector;
   nospacerule step;
@@ -57,7 +75,7 @@ struct ccs_grammar : qi::grammar<Iterator, qi::rule<Iterator>> {
              | qi::long_long >> !lit('.')
              | qi::double_
              | string;
-    ident = +char_("A-Za-z0-9$_") | string;
+    ident %= +char_("A-Za-z0-9$_") | string;
 
     // properties...
     property = -lit("inherit") >> ident >> '=' >> qi::lexeme[val >> !ident];
@@ -83,7 +101,7 @@ struct ccs_grammar : qi::grammar<Iterator, qi::rule<Iterator>> {
     ruleset = *context >> *rule;
   }
 
-  bool parse(Iterator &iter, Iterator end) {
+  bool parse(I &iter, I end) {
     return qi::phrase_parse(iter, end, *this, skipper);
   }
 };

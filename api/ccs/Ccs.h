@@ -7,6 +7,7 @@ class Node;
 
 class CcsDomain {
   Node *root_;
+  unsigned nextPropertyNumber_;
 
 public:
   CcsDomain();

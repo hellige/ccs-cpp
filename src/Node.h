@@ -10,7 +10,13 @@
 
 namespace ccs {
 
-class Property {};
+struct Value {};
+struct Origin {};
+struct Property {
+  Value value;
+  Origin origin;
+  unsigned propertyNumber;
+};
 
 class Node {
   std::map<Key, std::shared_ptr<Node>> children;

@@ -26,9 +26,19 @@ struct ccs_grammar : qi::grammar<Iterator, qi::rule<Iterator>> {
   nospacerule step;
   nospacerule stepsuffix;
   spacerule rule;
-  spacerule file;
+  spacerule ruleset;
 
-  ccs_grammar() : ccs_grammar::base_type(file) {
+  ccs_grammar() : ccs_grammar::base_type(ruleset, "CCS"),
+    blockComment("block comment"),
+    skipper("whitespace and comments"),
+    ident("identifier"),
+    property("property"),
+    selector("selector"),
+    step("selector step"),
+    stepsuffix("selector step modifier"),
+    rule("CCS rule"),
+    ruleset("CCS ruleset")
+  {
     using qi::lit;
     using qi::char_;
     using qi::space;
@@ -41,30 +51,36 @@ struct ccs_grammar : qi::grammar<Iterator, qi::rule<Iterator>> {
             | "//" >> *(char_ - eol) >> (eol | eoi)
             | space;
 
-    auto string = qi::lexeme['\'' >> *(char_ - ('\'' | eol)) >> '\''];
-    auto val = string | qi::long_long | qi::double_ | lit("0x") >> qi::hex;
+    auto string = qi::lexeme['\'' >> *(char_ - ('\'' | eol)) >> '\'']
+                | qi::lexeme['"' >> *(char_ - ('"' | eol)) >> '"'];
+    auto val = lit("0x") >> qi::hex
+             | qi::long_long >> !lit('.')
+             | qi::double_
+             | string;
     ident = +char_("A-Za-z0-9$_") | string;
-    auto context = lit("@context") >> -char_(">+") >> '(' >> selector >> ')'
-        >> -lit(';');
-    auto import = lit("@import") >> string >> -lit(';');
-    property = ident >> '=' >> val >> -lit(';');
-    // TODO make '+' and ',' lower precedence than '>' and ' '...
-    // TODO allow operator at start of selector...
-    selector = step >> '>' >> selector
-             | step >> '+' >> selector
-             | step >> selector
-             | step;
+
+    // properties...
+    property = -lit("inherit") >> ident >> '=' >> qi::lexeme[val >> !ident];
+
+    // selectors...
+    auto term = step >> *(-lit('>') >> step);
+    auto product = term >> *('+' >> term);
+    auto sum = product >> *(',' >> product);
     step = ('*' | ident) >> -stepsuffix
          | stepsuffix
-         | '(' >> qi::skip(skipper.alias())[selector] >> ')';
-    auto pseudo = lit("root") >> !ident;
+         | '(' >> qi::skip(skipper.alias())[sum] >> ')';
     stepsuffix = '.' >> ident >> -stepsuffix
-               | ':' >> pseudo >> -stepsuffix
                | '#' >> ident >> -stepsuffix
                | '[' >> qi::skip(skipper.alias())[ident >> '=' >> val >> ']' ]
                                                   >> -stepsuffix;
-    rule = import | property | (selector >> '{' >> +rule >> '}' >> -lit(';'));
-    file = *context >> *rule;
+    selector = -char_("+>,") >> sum;
+
+    // rules, rulesets...
+    auto import = lit("@import") >> string;
+    auto context = lit("@context") >> -char_(">+") >> '(' >> selector >> ')'
+        >> -lit(';');
+    rule = (import | property | selector >> '{' >> *rule >> '}') >> -lit(';');
+    ruleset = *context >> *rule;
   }
 
   bool parse(Iterator &iter, Iterator end) {

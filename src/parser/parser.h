@@ -1,5 +1,5 @@
-#ifndef CCS_PARSER_H_
-#define CCS_PARSER_H_
+#ifndef CCS_PARSER_PARSER_H_
+#define CCS_PARSER_PARSER_H_
 
 #include <string>
 
@@ -16,4 +16,4 @@ public:
 }
 
 
-#endif /* CCS_PARSER_H_ */
+#endif /* CCS_PARSER_PARSER_H_ */

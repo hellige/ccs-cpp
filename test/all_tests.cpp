@@ -1,21 +1,6 @@
 #include <cstdlib>
 #include <gtest/gtest.h>
 
-//
-//#include <iostream>
-//#include "Parser.h"
-//using namespace std;
-//using namespace ccs;
-//int main(int argc, char **argv) {
-//  Parser parser;
-//  cout << parser.parseString("") << endl;;
-//  cout << parser.parseString("@include()") << endl;;
-//  cout << parser.parseString("prop=val") << endl;;
-//  cout << parser.parseString("elem#id{prop=val}") << endl;;
-//  cout << parser.parseString(".class.class>:pseudo>elem#id{prop=val}") << endl;;
-//  cout << !parser.parseString("blah") << endl;;
-//}
-
 class TeamCityPrinter : public ::testing::EmptyTestEventListener {
   virtual void OnTestCaseStart(const ::testing::TestCase& test_case) {
     printf("##teamcity[testSuiteStarted name='%s']\n", test_case.name());

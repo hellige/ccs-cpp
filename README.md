@@ -14,3 +14,5 @@ TODO
 * Aggregate values: lists, maps.
 * For aggregate values, allow modification of inherited value as well as
   replacement??
+* API approach: custom value oject wrappers in the interface, destruction
+  just detaches from the shared structure. Ref counting for final disposal.

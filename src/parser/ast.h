@@ -1,6 +1,7 @@
 #ifndef CCS_PARSER_AST_H_
 #define CCS_PARSER_AST_H_
 
+#include <boost/lexical_cast.hpp>
 #include <boost/variant/recursive_variant.hpp>
 
 #include <memory>
@@ -16,12 +17,25 @@ struct Import {
 };
 
 
-struct Value {}; // TODO
+struct Value {
+  std::string strVal_; // TODO generalize?
+
+  Value &operator=(const Value &that) {
+    strVal_ = that.strVal_;
+    return *this;
+  }
+
+  template <typename T>
+  Value &operator=(const T &t) {
+    strVal_ = boost::lexical_cast<std::string>(t);
+    return *this;
+  }
+};
 
 struct PropDef {
   std::string name_;
   Value value_;
-  Origin origin_;
+  Origin origin_; // TODO track!
   bool local_;
   bool override_;
 };

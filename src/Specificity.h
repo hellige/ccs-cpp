@@ -3,12 +3,10 @@
 
 namespace ccs {
 
-class Specificity {
-  int idSelectors_;
-  int classSelectors_;
-  int elementNames_;
-
-public:
+struct Specificity {
+  int idSelectors;
+  int classSelectors;
+  int elementNames;
 };
 
 } /* namespace ccs */

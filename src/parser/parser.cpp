@@ -18,7 +18,7 @@ namespace phoenix = boost::phoenix;
 
 BOOST_FUSION_ADAPT_STRUCT(
     ccs::ast::Import,
-    (std::string, location_)
+    (string, location_)
 )
 
 namespace ccs {
@@ -26,35 +26,28 @@ namespace ccs {
 namespace {
 
 
-void g(const boost::fusion::unused_type& attribute,
-       const boost::fusion::unused_type& it,
-       bool& mFlag){
-    //output parameters
-    std::cout << "matched integer: '" << attribute << "'" << std::endl
-              << "match flag: " << mFlag << std::endl;
-}
-
-
 template <typename Iterator>
 struct ccs_grammar : qi::grammar<Iterator, ast::Nested(), qi::rule<Iterator>> {
   typedef Iterator I;
-  typedef qi::rule<I> nospacerule;
 
-  nospacerule blockComment;
-  nospacerule skipper;
+  qi::rule<I> blockComment;
+  qi::rule<I> skipper;
 
   typedef qi::rule<I, typeof(skipper)> spacerule;
 
   qi::rule<I, string()> ident;
-  nospacerule modifiers;
+  qi::rule<I, string()> strng;
+  qi::rule<I, void(ast::PropDef &)> modifiers;
+  qi::rule<I, ast::Value()> val;
   qi::rule<I, ast::PropDef(), typeof(skipper)> property;
   spacerule selector;
-  nospacerule vals;
-  nospacerule singlestep;
-  nospacerule stepsuffix;
-  spacerule step;
+  qi::rule<I, void(Key &, const string &)> vals;
+  qi::rule<I, void(Key &), qi::locals<string>> singlestep;
+  qi::rule<I, void(Key &)> stepsuffix;
+  qi::rule<I, Key(), typeof(skipper)> step;
 
   qi::rule<I, ast::Import(), typeof(skipper)> import;
+  qi::rule<I, ast::Constraint(), typeof(skipper)> constraint;
   qi::rule<I, typeof(skipper)> rulebody;
   qi::rule<I> rule;
   qi::rule<I, ast::Nested(), typeof(skipper)> ruleset;
@@ -65,6 +58,9 @@ struct ccs_grammar : qi::grammar<Iterator, ast::Nested(), qi::rule<Iterator>> {
     using qi::space;
     using qi::eol;
     using qi::eoi;
+    using qi::_r1;
+    using qi::_r2;
+    using qi::_a;
     using boost::spirit::_val;
     using boost::spirit::_1;
     using boost::spirit::_2;
@@ -76,37 +72,42 @@ struct ccs_grammar : qi::grammar<Iterator, ast::Nested(), qi::rule<Iterator>> {
             | "//" >> *(char_ - eol) >> (eol | eoi)
             | space;
 
-    auto string = qi::lexeme['\'' >> *(char_ - ('\'' | eol)) >> '\'']
-                | qi::lexeme['"' >> *(char_ - ('"' | eol)) >> '"'];
-    auto val = lit("0x") >> qi::hex
-             | qi::long_long >> !lit('.')
-             | qi::double_
-             | string;
-    ident %= +char_("A-Za-z0-9$_") | string;
+    strng = qi::lexeme['\'' >> *(char_ - ('\'' | eol)) >> '\'']
+           | qi::lexeme['"' >> *(char_ - ('"' | eol)) >> '"'];
+    val = lit("0x") >> qi::hex [_val = _1]
+        | qi::long_long [_val = _1] >> !lit('.')
+        | qi::double_ [_val = _1]
+        | strng;
+    ident %= +char_("A-Za-z0-9$_") | strng;
 
     // properties...
-    modifiers = -((lit("@override") >> skipper) ^
-        (lit("@local") >> skipper));
-    property = modifiers
-        >> ident[phoenix::bind(&ast::PropDef::name_, _val) = _1]
-        >> '=' >> val;
+    modifiers =
+        -((lit("@override")
+            [phoenix::bind(&ast::PropDef::override_, _r1) = true] >> skipper) ^
+        (lit("@local")
+            [phoenix::bind(&ast::PropDef::local_, _r1) = true ] >> skipper));
+    property = modifiers(_val)
+        >> ident [phoenix::bind(&ast::PropDef::name_, _val) = _1]
+        >> '=' >> val [phoenix::bind(&ast::PropDef::value_, _val) = _1];
 
     // selectors...
-    vals = lit('.') >> ident >> -vals;
-    auto namevals = ident >> -vals;
-    stepsuffix = lit('/') >> singlestep;
-    singlestep = namevals >> -stepsuffix;
+    vals = lit('.') >> ident[phoenix::bind(&Key::addValue, _r1, _r2, _1)]
+                             >> -vals(_r1, _r2);
+    stepsuffix = lit('/') >> singlestep(_r1);
+    singlestep = ident [phoenix::bind(&Key::addName, _r1, _1), _a = _1]
+                        >> -vals(_r1, _a) >> -stepsuffix(_r1);
 
     auto term = step >> *(lit('>') >> step);
     auto product = term >> *term;
     auto sum = product >> *(',' >> product);
-    step = singlestep
+    step = singlestep(_val)
         | '(' >> sum >> ')';
     selector = sum >> -lit('>');
 
     // rules, rulesets...
-    import %= lit("@import") >> string;
-    auto constraint = lit("@constraint") >> singlestep;
+    import %= lit("@import") >> strng;
+    constraint = lit("@constraint")
+        >> singlestep(phoenix::bind(&ast::Constraint::key_, _val));
     auto nested = selector >>
         (':' >> (import | constraint | property)
             | '{' >> *rule >> '}');

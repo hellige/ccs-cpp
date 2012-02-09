@@ -5,24 +5,38 @@
 #include <set>
 #include <string>
 
+#include <iostream> // TODO
+
 #include "Specificity.h"
 
 namespace ccs {
 
 class Key {
-  std::string element_;
-  std::map<std::string, std::string> attributes_;
-  std::set<std::string> classes_;
+  std::map<std::string, std::set<std::string>> values_;
   Specificity specificity_;
 
-  std::string id_;
-  bool root_;
-  bool directChild_;
-
 public:
-  Key();
+  bool operator<(const Key &) const { return false; } // TODO
 
-  bool operator<(const Key &) const { return false; }
+  void addName(const std::string &name) {
+    if (values_.find(name) == values_.end()) {
+      values_[name];
+      specificity_.elementNames++;
+    }
+  }
+
+  bool addValue(const std::string &name, const std::string &value) {
+    bool changed = false;
+    if (values_.find(name) == values_.end()) {
+      changed = true;
+      specificity_.elementNames++;
+    }
+    if (values_[name].insert(value).second) {
+      changed = true;
+      specificity_.classSelectors++;
+    }
+    return changed;
+  }
 };
 
 } /* namespace ccs */

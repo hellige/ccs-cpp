@@ -2,9 +2,6 @@
 
 namespace ccs {
 
-Key::Key () {
-  // TODO Auto-generated constructor stub
-
-}
+// TODO delete?
 
 } /* namespace ccs */

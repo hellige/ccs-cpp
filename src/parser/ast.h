@@ -4,13 +4,20 @@
 #include <boost/lexical_cast.hpp>
 #include <boost/variant/recursive_variant.hpp>
 
+#include <deque>
 #include <memory>
 #include <string>
 
-#include "Key.h"
-#include "Node.h"
+#include "dag/key.h"
+#include "dag/node.h"
 
-namespace ccs { namespace ast {
+namespace ccs {
+
+class Loader;
+class ImportResolver;
+namespace bc { class BuildContext; }
+
+namespace ast {
 
 // TODO desctructors or shared_ptrs...
 
@@ -79,6 +86,14 @@ struct Nested {
   std::vector<AstRule> rules_;
 
   void addRule(const AstRule &rule) { rules_.push_back(rule); }
+
+  void addTo(bc::BuildContext &buildContext, bc::BuildContext &baseContext);
+
+  bool resolveImports(ImportResolver &importResolver, Loader &loader,
+      std::deque<std::string> inProgress) {
+    // TODO implement me!
+    return true;
+  }
 };
 
 }}

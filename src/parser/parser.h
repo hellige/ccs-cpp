@@ -2,6 +2,9 @@
 #define CCS_PARSER_PARSER_H_
 
 #include <string>
+#include <istream>
+
+#include "parser/ast.h"
 
 namespace ccs {
 
@@ -9,8 +12,8 @@ class Node;
 
 class Parser {
 public:
-  bool parseString(std::string input);
-  bool parseString(Node &root, std::string input);
+  bool parseCcsStream(std::istream &stream, ast::Nested &ast);
+  bool parseString(const std::string &input);
 };
 
 }

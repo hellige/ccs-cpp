@@ -51,13 +51,15 @@ LIB_SO = dist/lib/lib$(LIB_NAME).so
 INCLUDE_OUT = dist/include
 
 MAIN_SRCS = $(shell find $(MAIN_DIR) -name '*.cpp')
+MAIN_INCS = $(shell find $(MAIN_DIR) -name '*.h')
 API_INCS = $(shell find $(API_DIR) -name '*.h')
 TEST_SRCS = $(shell find $(TEST_DIR) -name '*.cpp')
 MAIN_O = $(patsubst $(MAIN_DIR)/%.cpp,out/main/%.o,$(MAIN_SRCS))
+MAIN_HC = $(patsubst $(MAIN_DIR)/%.h,out/main/%.hc,$(MAIN_INCS))
 API_HC = $(patsubst $(API_DIR)/%.h,out/api/%.hc,$(API_INCS))
 TEST_O = $(patsubst $(TEST_DIR)/%.cpp,out/test/%.o,$(TEST_SRCS))
 ALL_O = $(MAIN_O) $(TEST_O)
-ALL_T = $(API_HC) $(LIB_A) $(LIB_SO) $(TEST_T)
+ALL_T = $(API_HC) $(MAIN_HC) $(LIB_A) $(LIB_SO) $(TEST_T)
 FIG_MAIN = .fig_done_main
 FIG_TEST = .fig_done_test
 CP_INCLUDE = .headers_copied
@@ -104,6 +106,12 @@ $(API_HC):out/api/%.hc: $(API_DIR)/%.h $(FIG_DEP)
 	@$(CXX) $(CFLAGS) -o /dev/null -c -w $<
 	@touch $@
 
+$(MAIN_HC):out/main/%.hc: $(MAIN_DIR)/%.h $(FIG_DEP)
+	@mkdir -p $(dir $@)
+	@echo "Checking self-contained: $<"
+	@$(CXX) $(CFLAGS) -o /dev/null -c -w $<
+	@touch $@
+
 $(TEST_T): $(TEST_O) $(LIB_A)
 	@mkdir -p $(dir $@)
 	$(CXX) -o $@ $^ $(PLATLDFLAGS) $(LIBS) $(LIBS_TEST)
@@ -136,6 +144,7 @@ echo:
 	@echo "CXX = $(CXX)"
 	@echo "CFLAGS = $(CFLAGS)"
 	@echo "API_INCS = $(API_INCS)"
+	@echo "MAIN_INCS = $(MAIN_INCS)"
 	@echo "MAIN_SRCS = $(MAIN_SRCS)"
 	@echo "TEST_SRCS = $(TEST_SRCS)"
 	@echo "CXX VERSION = $(shell $(CXX) --version)"

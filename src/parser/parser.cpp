@@ -9,10 +9,10 @@
 #include <boost/spirit/include/phoenix.hpp>
 #include <boost/tuple/tuple.hpp>
 
-#include "Node.h"
-#include "parser/ast.h"
+#include "dag/node.h"
 
-using namespace std;
+using std::cout;
+using std::string;
 namespace qi = boost::spirit::qi;
 namespace phoenix = boost::phoenix;
 
@@ -143,7 +143,7 @@ struct ccs_grammar : qi::grammar<Iterator, ast::Nested(), qi::rule<Iterator>> {
 }
 
 
-bool Parser::parseString(string input) {
+bool Parser::parseString(const string &input) {
   auto iter = input.begin();
   ccs_grammar<typeof(iter)> grammar;
   bool r = grammar.parse(iter, input.end());
@@ -159,21 +159,5 @@ bool Parser::parseString(string input) {
   }
 }
 
-
-bool Parser::parseString(Node &root, string input) {
-  auto iter = input.begin();
-  ccs_grammar<typeof(iter)> grammar;
-  bool r = grammar.parse(iter, input.end());
-
-  if (r && iter == input.end()) {
-    cout << "Parsing succeeded\n";
-    //cout << "result = " << result << endl;
-    return true;
-  } else {
-    string rest(iter, input.end());
-    cout << "Parsing failed, stopped at: \"" << rest << "\"\n";
-    return false;
-  }
-}
 
 }

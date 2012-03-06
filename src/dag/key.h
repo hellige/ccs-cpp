@@ -5,9 +5,7 @@
 #include <set>
 #include <string>
 
-#include <iostream> // TODO
-
-#include "Specificity.h"
+#include "dag/specificity.h"
 
 namespace ccs {
 

@@ -21,6 +21,12 @@ BOOST_FUSION_ADAPT_STRUCT(
     (string, location_)
 )
 
+BOOST_FUSION_ADAPT_STRUCT(
+    ccs::ast::Nested,
+    (ccs::ast::SelectorBranch *, selector_)
+    (std::vector<ccs::ast::AstRule>, rules_)
+)
+
 namespace ccs {
 
 namespace {
@@ -51,8 +57,9 @@ struct ccs_grammar : qi::grammar<Iterator, ast::Nested(), qi::rule<Iterator>> {
 
   qi::rule<I, ast::Import(), typeof(skipper)> import;
   qi::rule<I, ast::Constraint(), typeof(skipper)> constraint;
-  qi::rule<I, typeof(skipper)> rulebody;
-  qi::rule<I> rule;
+  qi::rule<I, ast::Nested(), typeof(skipper)> nested;
+  qi::rule<I, ast::AstRule(), typeof(skipper)> rulebody;
+  qi::rule<I, ast::AstRule()> rule;
   qi::rule<I, ast::Nested(), typeof(skipper)> ruleset;
 
   ccs_grammar() : ccs_grammar::base_type(ruleset, "CCS") {
@@ -115,17 +122,16 @@ struct ccs_grammar : qi::grammar<Iterator, ast::Nested(), qi::rule<Iterator>> {
     import %= lit("@import") >> strng;
     constraint = lit("@constraint")
         >> singlestep(phoenix::bind(&ast::Constraint::key_, _val));
-    auto nested = selector >>
+    nested = selector [phoenix::bind(&ast::Nested::selector_, _val) = _1] >>
         (':' >> (import | constraint | property)
-            | '{' >> *rule >> '}');
+            [phoenix::bind(&ast::Nested::addRule, _val, _1)]
+        | ('{' >> *rule >> '}')
+            [phoenix::bind(&ast::Nested::rules_, _val) = _1]);
     rulebody = import | constraint | property | nested;
     rule = qi::skip(skipper.alias())[rulebody] >>
         (lit(';') | skipper | &lit('}') | eoi);
     auto context = lit("@context") >> '(' >> selector >> ')' >> -lit(';');
-    // TODO replace with auto rule when *rule has a real ast
-    ruleset = -(context [phoenix::bind(&ast::Nested::selector_, _val) = _1])
-        >> *rule
-        >> eoi;
+    ruleset %= -context >> *rule >> eoi;
   }
 
   bool parse(I &iter, I end) {

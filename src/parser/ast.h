@@ -51,7 +51,6 @@ struct Constraint {
 struct Nested;
 
 typedef boost::variant<
-    boost::blank, // TODO
     Import,
     PropDef,
     Constraint,
@@ -78,6 +77,8 @@ struct SelectorLeaf {
 struct Nested {
   SelectorBranch *selector_;
   std::vector<AstRule> rules_;
+
+  void addRule(const AstRule &rule) { rules_.push_back(rule); }
 };
 
 }}

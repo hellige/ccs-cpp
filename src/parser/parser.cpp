@@ -40,11 +40,14 @@ struct ccs_grammar : qi::grammar<Iterator, ast::Nested(), qi::rule<Iterator>> {
   qi::rule<I, void(ast::PropDef &)> modifiers;
   qi::rule<I, ast::Value()> val;
   qi::rule<I, ast::PropDef(), typeof(skipper)> property;
-  spacerule selector;
+  qi::rule<I, ast::SelectorBranch*(), typeof(skipper)> selector;
   qi::rule<I, void(Key &, const string &)> vals;
   qi::rule<I, void(Key &), qi::locals<string>> singlestep;
   qi::rule<I, void(Key &)> stepsuffix;
-  qi::rule<I, Key(), typeof(skipper)> step;
+  qi::rule<I, ast::SelectorLeaf*(), typeof(skipper), qi::locals<Key>> step;
+  qi::rule<I, ast::SelectorLeaf*(), typeof(skipper)> term;
+  qi::rule<I, ast::SelectorLeaf*(), typeof(skipper)> product;
+  qi::rule<I, ast::SelectorLeaf*(), typeof(skipper)> sum;
 
   qi::rule<I, ast::Import(), typeof(skipper)> import;
   qi::rule<I, ast::Constraint(), typeof(skipper)> constraint;
@@ -97,12 +100,16 @@ struct ccs_grammar : qi::grammar<Iterator, ast::Nested(), qi::rule<Iterator>> {
     singlestep = ident [phoenix::bind(&Key::addName, _r1, _1), _a = _1]
                         >> -vals(_r1, _a) >> -stepsuffix(_r1);
 
-    auto term = step >> *(lit('>') >> step);
-    auto product = term >> *term;
-    auto sum = product >> *(',' >> product);
-    step = singlestep(_val)
-        | '(' >> sum >> ')';
-    selector = sum >> -lit('>');
+    term = step [_val = _1] >> *(lit('>') >> step
+        [_val = phoenix::bind(&ast::SelectorLeaf::descendant, _val, _1)]);
+    product = term [_val = _1] >> *(term
+        [_val = phoenix::bind(&ast::SelectorLeaf::conjunction, _val, _1)]);
+    sum = product [_val = _1] >> *(',' >> product
+        [_val = phoenix::bind(&ast::SelectorLeaf::disjunction, _val, _1)]);
+    step = singlestep(_a) [_val = phoenix::bind(&ast::SelectorLeaf::step, _a)]
+        | '(' >> sum [_val = _1] >> ')';
+    selector = (sum >> -lit('>'))
+        [phoenix::bind(&ast::SelectorBranch::conjunction, _1)];
 
     // rules, rulesets...
     import %= lit("@import") >> strng;
@@ -115,7 +122,8 @@ struct ccs_grammar : qi::grammar<Iterator, ast::Nested(), qi::rule<Iterator>> {
     rule = qi::skip(skipper.alias())[rulebody] >>
         (lit(';') | skipper | &lit('}') | eoi);
     auto context = lit("@context") >> '(' >> selector >> ')' >> -lit(';');
-    ruleset = -context
+    // TODO replace with auto rule when *rule has a real ast
+    ruleset = -(context [phoenix::bind(&ast::Nested::selector_, _val) = _1])
         >> *rule
         >> eoi;
   }

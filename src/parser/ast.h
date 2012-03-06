@@ -8,8 +8,11 @@
 #include <string>
 
 #include "Key.h"
+#include "Node.h"
 
 namespace ccs { namespace ast {
+
+// TODO desctructors or shared_ptrs...
 
 
 struct Import {
@@ -55,10 +58,25 @@ typedef boost::variant<
     boost::recursive_wrapper<Nested>>
   AstRule;
 
-struct SelectorBranch {}; // TODO
+struct SelectorLeaf;
+
+struct SelectorBranch {
+  static SelectorBranch *descendant(SelectorLeaf *first);
+  static SelectorBranch *conjunction(SelectorLeaf *first);
+  static SelectorBranch *disjunction(SelectorLeaf *first);
+};
+
+struct SelectorLeaf {
+  virtual ~SelectorLeaf() {};
+  virtual SelectorLeaf *descendant(SelectorLeaf *right) = 0;
+  virtual SelectorLeaf *conjunction(SelectorLeaf *right) = 0;
+  virtual SelectorLeaf *disjunction(SelectorLeaf *right) = 0;
+
+  static SelectorLeaf *step(const Key &key);
+};
 
 struct Nested {
-  std::shared_ptr<SelectorBranch> selector_;
+  SelectorBranch *selector_;
   std::vector<AstRule> rules_;
 };
 

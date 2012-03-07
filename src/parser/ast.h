@@ -67,6 +67,9 @@ typedef boost::variant<
 struct SelectorLeaf;
 
 struct SelectorBranch {
+  virtual bc::BuildContext *traverse(bc::BuildContext &context,
+      bc::BuildContext &baseContext) = 0;
+
   static SelectorBranch *descendant(SelectorLeaf *first);
   static SelectorBranch *conjunction(SelectorLeaf *first);
   static SelectorBranch *disjunction(SelectorLeaf *first);
@@ -74,6 +77,7 @@ struct SelectorBranch {
 
 struct SelectorLeaf {
   virtual ~SelectorLeaf() {};
+  virtual Node &traverse(bc::BuildContext &context) = 0;
   virtual SelectorLeaf *descendant(SelectorLeaf *right) = 0;
   virtual SelectorLeaf *conjunction(SelectorLeaf *right) = 0;
   virtual SelectorLeaf *disjunction(SelectorLeaf *right) = 0;
@@ -84,6 +88,8 @@ struct SelectorLeaf {
 struct Nested {
   SelectorBranch *selector_;
   std::vector<AstRule> rules_;
+
+  Nested() : selector_(NULL) {}
 
   void addRule(const AstRule &rule) { rules_.push_back(rule); }
 

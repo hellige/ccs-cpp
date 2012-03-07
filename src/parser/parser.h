@@ -13,7 +13,6 @@ class Node;
 class Parser {
 public:
   bool parseCcsStream(std::istream &stream, ast::Nested &ast);
-  bool parseString(const std::string &input);
 };
 
 }

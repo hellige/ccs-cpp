@@ -1,12 +1,13 @@
 #include "parser/parser.h"
 
 #include <iostream>
-#include <unordered_map>
+#include <istream>
 #include <vector>
 
 #include <boost/fusion/include/adapt_struct.hpp>
 #include <boost/spirit/include/qi.hpp>
 #include <boost/spirit/include/phoenix.hpp>
+#include <boost/spirit/include/support_istream_iterator.hpp>
 #include <boost/tuple/tuple.hpp>
 
 #include "dag/node.h"
@@ -75,6 +76,7 @@ struct ccs_grammar : qi::grammar<Iterator, ast::Nested(), qi::rule<Iterator>> {
     using boost::spirit::_1;
     using boost::spirit::_2;
     using boost::spirit::_3;
+    using phoenix::bind;
 
     // comments and whitespace...
     blockComment = "/*" >> *(blockComment | (char_ - "*/")) >> "*/";
@@ -93,40 +95,40 @@ struct ccs_grammar : qi::grammar<Iterator, ast::Nested(), qi::rule<Iterator>> {
     // properties...
     modifiers =
         -((lit("@override")
-            [phoenix::bind(&ast::PropDef::override_, _r1) = true] >> skipper) ^
+            [bind(&ast::PropDef::override_, _r1) = true] >> skipper) ^
         (lit("@local")
-            [phoenix::bind(&ast::PropDef::local_, _r1) = true ] >> skipper));
+            [bind(&ast::PropDef::local_, _r1) = true ] >> skipper));
     property = modifiers(_val)
-        >> ident [phoenix::bind(&ast::PropDef::name_, _val) = _1]
-        >> '=' >> val [phoenix::bind(&ast::PropDef::value_, _val) = _1];
+        >> ident [bind(&ast::PropDef::name_, _val) = _1]
+        >> '=' >> val [bind(&ast::PropDef::value_, _val) = _1];
 
     // selectors...
-    vals = lit('.') >> ident[phoenix::bind(&Key::addValue, _r1, _r2, _1)]
+    vals = lit('.') >> ident[bind(&Key::addValue, _r1, _r2, _1)]
                              >> -vals(_r1, _r2);
     stepsuffix = lit('/') >> singlestep(_r1);
-    singlestep = ident [phoenix::bind(&Key::addName, _r1, _1), _a = _1]
+    singlestep = ident [bind(&Key::addName, _r1, _1), _a = _1]
                         >> -vals(_r1, _a) >> -stepsuffix(_r1);
 
     term = step [_val = _1] >> *(lit('>') >> step
-        [_val = phoenix::bind(&ast::SelectorLeaf::descendant, _val, _1)]);
+        [_val = bind(&ast::SelectorLeaf::descendant, _val, _1)]);
     product = term [_val = _1] >> *(term
-        [_val = phoenix::bind(&ast::SelectorLeaf::conjunction, _val, _1)]);
+        [_val = bind(&ast::SelectorLeaf::conjunction, _val, _1)]);
     sum = product [_val = _1] >> *(',' >> product
-        [_val = phoenix::bind(&ast::SelectorLeaf::disjunction, _val, _1)]);
-    step = singlestep(_a) [_val = phoenix::bind(&ast::SelectorLeaf::step, _a)]
+        [_val = bind(&ast::SelectorLeaf::disjunction, _val, _1)]);
+    step = singlestep(_a) [_val = bind(&ast::SelectorLeaf::step, _a)]
         | '(' >> sum [_val = _1] >> ')';
     selector = (sum >> -lit('>'))
-        [phoenix::bind(&ast::SelectorBranch::conjunction, _1)];
+        [bind(&ast::SelectorBranch::conjunction, _1)];
 
     // rules, rulesets...
     import %= lit("@import") >> strng;
     constraint = lit("@constraint")
-        >> singlestep(phoenix::bind(&ast::Constraint::key_, _val));
-    nested = selector [phoenix::bind(&ast::Nested::selector_, _val) = _1] >>
+        >> singlestep(bind(&ast::Constraint::key_, _val));
+    nested = selector [bind(&ast::Nested::selector_, _val) = _1] >>
         (':' >> (import | constraint | property)
-            [phoenix::bind(&ast::Nested::addRule, _val, _1)]
+            [bind(&ast::Nested::addRule, _val, _1)]
         | ('{' >> *rule >> '}')
-            [phoenix::bind(&ast::Nested::rules_, _val) = _1]);
+            [bind(&ast::Nested::rules_, _val) = _1]);
     rulebody = import | constraint | property | nested;
     rule = qi::skip(skipper.alias())[rulebody] >>
         (lit(';') | skipper | &lit('}') | eoi);
@@ -134,8 +136,7 @@ struct ccs_grammar : qi::grammar<Iterator, ast::Nested(), qi::rule<Iterator>> {
     ruleset %= -context >> *rule >> eoi;
   }
 
-  bool parse(I &iter, I end) {
-    ast::Nested ast;
+  bool parse(I &iter, I end, ast::Nested &ast) {
     return qi::phrase_parse(iter, end, *this, skipper, ast);
   }
 };
@@ -143,20 +144,20 @@ struct ccs_grammar : qi::grammar<Iterator, ast::Nested(), qi::rule<Iterator>> {
 }
 
 
-bool Parser::parseString(const string &input) {
-  auto iter = input.begin();
-  ccs_grammar<typeof(iter)> grammar;
-  bool r = grammar.parse(iter, input.end());
+bool Parser::parseCcsStream(std::istream &stream, ast::Nested &ast) {
+  stream.unsetf(std::ios::skipws);
 
-  if (r && iter == input.end()) {
-    cout << "Parsing succeeded\n";
-    //cout << "result = " << result << endl;
-    return true;
-  } else {
-    string rest(iter, input.end());
-    cout << "Parsing failed, stopped at: \"" << rest << "\"\n";
-    return false;
-  }
+  boost::spirit::istream_iterator iter(stream);
+  boost::spirit::istream_iterator end;
+
+  ccs_grammar<typeof(iter)> grammar;
+  bool r = grammar.parse(iter, end, ast);
+
+  if (r && iter == end) return true;
+
+  string rest(iter, end);
+  cout << "Parsing failed, stopped at: \"" << rest << "\"\n";
+  return false;
 }
 
 

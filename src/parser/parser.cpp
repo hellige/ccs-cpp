@@ -10,8 +10,6 @@
 #include <boost/spirit/include/support_istream_iterator.hpp>
 #include <boost/tuple/tuple.hpp>
 
-#include "dag/node.h"
-
 using std::cout;
 using std::string;
 namespace qi = boost::spirit::qi;

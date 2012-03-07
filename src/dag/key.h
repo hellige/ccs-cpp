@@ -4,6 +4,7 @@
 #include <map>
 #include <set>
 #include <string>
+#include <vector>
 
 #include "dag/specificity.h"
 
@@ -14,12 +15,24 @@ class Key {
   Specificity specificity_;
 
 public:
+  Key() {}
+
+  Key(const std::string &name, const std::vector<std::string> &values) {
+    addName(name);
+    for (auto it = values.begin(); it != values.end(); ++it)
+      addValue(name, *it);
+  }
+
+  Key(const Key &) = default;
+  Key &operator=(const Key &) = default;
+  ~Key() = default;
+
   bool operator<(const Key &) const { return false; } // TODO
 
   void addName(const std::string &name) {
     if (values_.find(name) == values_.end()) {
       values_[name];
-      specificity_.elementNames++;
+      specificity_.names++;
     }
   }
 
@@ -27,16 +40,16 @@ public:
     bool changed = false;
     if (values_.find(name) == values_.end()) {
       changed = true;
-      specificity_.elementNames++;
+      specificity_.names++;
     }
     if (values_[name].insert(value).second) {
       changed = true;
-      specificity_.classSelectors++;
+      specificity_.values++;
     }
     return changed;
   }
 };
 
-} /* namespace ccs */
+}
 
 #endif /* CCS_KEY_H_ */

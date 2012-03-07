@@ -1,27 +1,10 @@
 #ifndef CCS_CCS_H_
 #define CCS_CCS_H_
 
-#include <memory>
+/* Single all-in header, includes the entire CCS API. */
 
-namespace ccs {
-
-class DagBuilder;
-class ImportResolver;
-
-class CcsDomain {
-  std::unique_ptr<DagBuilder> dag_;
-
-public:
-  CcsDomain();
-  ~CcsDomain();
-  CcsDomain(const CcsDomain &) = delete;
-  CcsDomain &operator=(const CcsDomain &) = delete;
-
-  CcsDomain &loadCcsStream(std::istream &stream, const std::string &fileName,
-      ImportResolver &importResolver);
-};
-
-}
-
+#include "ccs/context.h"
+#include "ccs/domain.h"
+#include "ccs/types.h"
 
 #endif /* CCS_CCS_H_ */

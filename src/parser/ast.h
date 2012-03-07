@@ -7,20 +7,21 @@
 #include <deque>
 #include <memory>
 #include <string>
+#include <vector>
 
+#include "ccs/types.h"
 #include "dag/key.h"
-#include "dag/node.h"
 
 namespace ccs {
 
 class Loader;
 class ImportResolver;
+class Node;
 namespace bc { class BuildContext; }
 
 namespace ast {
 
-// TODO desctructors or shared_ptrs...
-
+// TODO destructors or shared_ptrs...
 
 struct Import {
   std::string location_;

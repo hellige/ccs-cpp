@@ -6,12 +6,14 @@
 #include <string>
 #include <vector>
 
+#include "ccs/types.h"
 #include "dag/key.h"
 
 namespace ccs {
 
+class SearchState;
+
 struct Value {};
-struct Origin {};
 struct Property {
   Value value;
   Origin origin;
@@ -24,7 +26,20 @@ class Node {
   std::multimap<std::string, Property> localProps;
 
 public:
-  Node ();
+  Node () {}
+
+  Node &addChild(const Key &key) {
+    return *(*children.insert(std::make_pair(key, std::make_shared<Node>()))
+        .first).second;
+  }
+
+  void getChildren(const Key &key, const Specificity &spec,
+      SearchState &searchState) {
+    // TODO
+//    for (Map.Entry<Key, Node> entry : children.entrySet())
+//      if (entry.getKey().matches(key))
+//        entry.getValue().activate(spec.add(entry.getKey().getSpecificity()), searchState);
+  }
 };
 
 } /* namespace ccs */

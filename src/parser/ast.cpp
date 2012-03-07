@@ -2,6 +2,7 @@
 
 #include <boost/variant.hpp>
 
+#include "dag/node.h"
 #include "parser/build_context.h"
 
 namespace ccs { namespace ast {
@@ -71,16 +72,8 @@ struct Step : public SelectorLeaf {
   virtual SelectorLeaf *disjunction(SelectorLeaf *right)
     { return new Wrap(SelectorBranch::disjunction(this), right); }
 
-  virtual Node &traverse(bc::BuildContext &context) {
-    Node &node = context.node();
-    Node &tmpNode = node; // TODO delete
-//    Node tmpNode = node.getChild(key);
-//    if (tmpNode == null) {
-//        tmpNode = new Node();
-//        node.addChild(key, tmpNode);
-//    }
-    return tmpNode;
-  }
+  virtual Node &traverse(bc::BuildContext &context)
+    { return context.node().addChild(key_); }
 };
 
 SelectorLeaf *SelectorLeaf::step(const Key &key) {

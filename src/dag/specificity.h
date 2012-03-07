@@ -4,11 +4,16 @@
 namespace ccs {
 
 struct Specificity {
-  int idSelectors;
-  int classSelectors;
-  int elementNames;
+  unsigned names;
+  unsigned values;
+
+  bool operator<(const Specificity &s) const {
+    if (values < s.values) return true;
+    if (names < s.names) return true;
+    return false;
+  }
 };
 
-} /* namespace ccs */
+}
 
 #endif /* CCS_SPECIFICITY_H_ */

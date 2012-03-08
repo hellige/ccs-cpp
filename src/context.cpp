@@ -12,28 +12,29 @@ namespace ccs {
 
 struct TallyMap {
   TallyMap() {}
-  // TODO this is NOT a copy constructor, it's a chaining constructor. ugly.
+  // TODO this is NOT a copy constructor, it's a chaining constructor. ugly and dangerous.
   TallyMap(const TallyMap &tallyMap) {}
 };
 
 class SearchState {
+  std::shared_ptr<SearchState> parent;
   std::map<Specificity, std::set<Node*>> nodes; // TODO reverse order? should it hold shared pointers or what?
   TallyMap tallyMap;
-  CcsContext ccsContext;
   CcsLogger &log;
   Key key;
   bool constraintsChanged;
 
-  SearchState(TallyMap &tallyMap, CcsContext &ccsContext, const Key &key,
-      CcsLogger &log) :
-      tallyMap(tallyMap),
-      ccsContext(ccsContext),
-      log(log),
-      key(key) {}
+  SearchState(TallyMap &tallyMap, const std::shared_ptr<SearchState> &parent,
+      const Key &key, CcsLogger &log) :
+        parent(parent),
+        tallyMap(tallyMap),
+        log(log),
+        key(key) {}
 
 public:
-  SearchState(Node &root, CcsContext &ccsContext, CcsLogger &log) :
-      ccsContext(ccsContext), log(log) {
+  SearchState(Node &root, const std::shared_ptr<SearchState> &parent,
+      CcsLogger &log) :
+        parent(parent), log(log) {
     std::set<Node *> s = { &root };
     nodes[Specificity()] = s;
   }
@@ -41,10 +42,22 @@ public:
   SearchState(const SearchState &) = delete;
   SearchState &operator=(const SearchState &) = delete;
 
-  std::shared_ptr<SearchState> newChild(CcsContext &ccsContext,
-      const Key &key) {
-    return std::shared_ptr<SearchState>(new SearchState(tallyMap, ccsContext,
-        key, log));
+  static std::shared_ptr<SearchState> newChild(
+      const std::shared_ptr<SearchState> &parent, const Key &key) {
+    std::shared_ptr<SearchState> searchState(new SearchState(parent->tallyMap,
+        parent, key, parent->log));
+
+    bool constraintsChanged;
+    do {
+      constraintsChanged = false;
+      SearchState *p = parent.get();
+      while (p) {
+        constraintsChanged |= searchState->extendWith(*p);
+        p = p->parent.get();
+      }
+    } while (constraintsChanged);
+
+    return searchState;
   }
 
   bool extendWith(const SearchState &priorState) {
@@ -57,52 +70,21 @@ public:
 };
 
 CcsContext::CcsContext(Node &root, CcsLogger &log) :
-    searchState(new SearchState(root, *this, log)) {}
+    searchState(new SearchState(root, NULL, log)) {}
 
 CcsContext::CcsContext(const CcsContext &parent, const Key &key) :
-    parent(new CcsContext(parent)),
-    searchState(getSearchState(key)) {}
+    searchState(SearchState::newChild(parent.searchState, key)) {}
 
 CcsContext::CcsContext(const CcsContext &parent, const std::string &name) :
-    parent(new CcsContext(parent)),
-    searchState(getSearchState(Key(name, {}))) {}
+    searchState(SearchState::newChild(parent.searchState, Key(name, {}))) {}
 
 CcsContext::CcsContext(const CcsContext &parent, const std::string &name,
     const std::vector<std::string> &values) :
-    parent(new CcsContext(parent)),
-    searchState(getSearchState(Key(name, values))) {}
-
-CcsContext::CcsContext(const CcsContext &that) :
-    parent(that.parent ? new CcsContext(*that.parent) : NULL),
-    searchState(that.searchState) {}
-
-CcsContext &CcsContext::operator=(const CcsContext &that) {
-  searchState = that.searchState;
-  if (that.parent)
-    parent.reset(new CcsContext(*that.parent));
-  return *this;
-}
+    searchState(SearchState::newChild(parent.searchState,
+        Key(name, values))) {}
 
 std::string CcsContext::getString(const std::string &propertyName) const {
   return "TODO"; // TODO
 }
-
-std::shared_ptr<SearchState> CcsContext::getSearchState(const Key &key) {
-    std::shared_ptr<SearchState> tmp =
-        parent->searchState->newChild(*this, key);
-
-    bool constraintsChanged;
-    do {
-        constraintsChanged = false;
-        CcsContext *p = parent.get();
-        while (p) {
-            constraintsChanged |= tmp->extendWith(*p->searchState);
-            p = p->parent.get();
-        }
-    } while (constraintsChanged);
-
-    return tmp;
-}
-
 
 }

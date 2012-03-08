@@ -12,7 +12,6 @@ class Node;
 class SearchState;
 
 class CcsContext {
-  std::unique_ptr<CcsContext> parent;
   std::shared_ptr<SearchState> searchState;
 
   friend class CcsDomain;
@@ -22,11 +21,10 @@ class CcsContext {
   CcsContext(const CcsContext &parent, const std::string &name,
       const std::vector<std::string> &values);
 
-  std::shared_ptr<SearchState> getSearchState(const Key &key);
-
 public:
-  CcsContext(const CcsContext &that);
-  CcsContext &operator=(const CcsContext &that);
+  CcsContext(const CcsContext &that) = default;
+  CcsContext &operator=(const CcsContext &that) = default;
+  ~CcsContext() = default;
 
   // TODO Builder builder();
 

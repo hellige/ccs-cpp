@@ -84,7 +84,7 @@ struct ccs_grammar : qi::grammar<Iterator, ast::Nested(), qi::rule<Iterator>> {
 
     strng = qi::lexeme['\'' >> *(char_ - ('\'' | eol)) >> '\'']
            | qi::lexeme['"' >> *(char_ - ('"' | eol)) >> '"'];
-    val = lit("0x") >> qi::hex [_val = _1]
+    val %= lit("0x") >> qi::hex [_val = _1]
         | qi::long_long [_val = _1] >> !lit('.')
         | qi::double_ [_val = _1]
         | strng;
@@ -116,7 +116,7 @@ struct ccs_grammar : qi::grammar<Iterator, ast::Nested(), qi::rule<Iterator>> {
     step = singlestep(_a) [_val = bind(&ast::SelectorLeaf::step, _a)]
         | '(' >> sum [_val = _1] >> ')';
     selector = (sum >> -lit('>'))
-        [bind(&ast::SelectorBranch::conjunction, _1)];
+        [_val = bind(&ast::SelectorBranch::conjunction, _1)];
 
     // rules, rulesets...
     import %= lit("@import") >> strng;

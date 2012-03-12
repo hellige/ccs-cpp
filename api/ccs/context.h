@@ -2,11 +2,13 @@
 #define CONTEXT_H_
 
 #include <memory>
+#include <string>
 #include <vector>
 
 namespace ccs {
 
 class CcsLogger;
+class CcsProperty;
 class Key;
 class Node;
 class SearchState;
@@ -35,7 +37,26 @@ public:
       const std::vector<std::string> &values) const
     { return CcsContext(*this, name, values); }
 
-  std::string getString(const std::string &propertyName) const;
+  const CcsProperty &getProperty(const std::string &propertyName) const
+    { return findProperty(propertyName, true); }
+
+  const std::string &getString(const std::string &propertyName) const;
+
+private:
+  const CcsProperty &findProperty(const std::string &propertyName,
+      bool locals) const;
+};
+
+struct no_such_property : public std::exception {
+  std::string name;
+  CcsContext context;
+
+  no_such_property(const std::string &name, CcsContext context) throw() :
+    name(name), context(context) {}
+  virtual ~no_such_property() throw() {}
+
+  virtual const char *what() const throw()
+    { return "no such CCS property"; }
 };
 
 }

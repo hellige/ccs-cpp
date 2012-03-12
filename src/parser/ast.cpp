@@ -14,9 +14,18 @@ struct AstVisitor : public boost::static_visitor<void> {
   AstVisitor(bc::BuildContext &buildContext, bc::BuildContext &baseContext) :
     buildContext(buildContext), baseContext(baseContext) {}
 
-  void operator()(Import &import) const {}
-  void operator()(PropDef &propDef) const {}
-  void operator()(Constraint &constraint) const {}
+  void operator()(Import &import) const {
+    // TODO import.ast.addTo(buildContext, baseContext);
+  }
+
+  void operator()(PropDef &propDef) const {
+    buildContext.addProperty(propDef);
+  }
+
+  void operator()(Constraint &constraint) const {
+    buildContext.node().addConstraint(constraint.key_);
+  }
+
   void operator()(Nested &nested) const {
     nested.addTo(buildContext, baseContext);
   }

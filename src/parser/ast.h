@@ -31,6 +31,9 @@ struct Import {
 struct Value {
   std::string strVal_; // TODO generalize?
 
+  Value() {}
+  Value(const std::string &str) : strVal_(str) {}
+
   Value &operator=(const Value &that) {
     strVal_ = that.strVal_;
     return *this;
@@ -49,6 +52,8 @@ struct PropDef {
   Origin origin_; // TODO track!
   bool local_;
   bool override_;
+
+  PropDef() : local_(false), override_(false) {}
 };
 
 

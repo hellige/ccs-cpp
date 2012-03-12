@@ -2,72 +2,20 @@
 
 #include <map>
 #include <set>
+#include <stdexcept>
 
-#include "ccs/domain.h"
-#include "dag/key.h"
-#include "dag/node.h"
-#include "dag/specificity.h"
+#include "search_state.h"
+#include "ccs/types.h"
 
 namespace ccs {
 
-struct TallyMap {
-  TallyMap() {}
-  // TODO this is NOT a copy constructor, it's a chaining constructor. ugly and dangerous.
-  TallyMap(const TallyMap &tallyMap) {}
+struct MissingProp : public CcsProperty {
+  virtual bool exists() const { return false; }
+  virtual const std::string &value() const
+    { throw std::runtime_error("called value() on MissingProp"); }
 };
 
-class SearchState {
-  std::shared_ptr<SearchState> parent;
-  std::map<Specificity, std::set<Node*>> nodes; // TODO reverse order? should it hold shared pointers or what?
-  TallyMap tallyMap;
-  CcsLogger &log;
-  Key key;
-  bool constraintsChanged;
-
-  SearchState(TallyMap &tallyMap, const std::shared_ptr<SearchState> &parent,
-      const Key &key, CcsLogger &log) :
-        parent(parent),
-        tallyMap(tallyMap),
-        log(log),
-        key(key) {}
-
-public:
-  SearchState(Node &root, const std::shared_ptr<SearchState> &parent,
-      CcsLogger &log) :
-        parent(parent), log(log) {
-    std::set<Node *> s = { &root };
-    nodes[Specificity()] = s;
-  }
-
-  SearchState(const SearchState &) = delete;
-  SearchState &operator=(const SearchState &) = delete;
-
-  static std::shared_ptr<SearchState> newChild(
-      const std::shared_ptr<SearchState> &parent, const Key &key) {
-    std::shared_ptr<SearchState> searchState(new SearchState(parent->tallyMap,
-        parent, key, parent->log));
-
-    bool constraintsChanged;
-    do {
-      constraintsChanged = false;
-      SearchState *p = parent.get();
-      while (p) {
-        constraintsChanged |= searchState->extendWith(*p);
-        p = p->parent.get();
-      }
-    } while (constraintsChanged);
-
-    return searchState;
-  }
-
-  bool extendWith(const SearchState &priorState) {
-    constraintsChanged = false;
-    for (auto it = priorState.nodes.begin(); it != priorState.nodes.end(); ++it)
-        for (auto it2 = it->second.begin(); it2 != it->second.end(); ++it2)
-            (*it2)->getChildren(key, it->first, *this);
-    return constraintsChanged;
-  }
-};
+namespace { MissingProp Missing; }
 
 CcsContext::CcsContext(Node &root, CcsLogger &log) :
     searchState(new SearchState(root, NULL, log)) {}
@@ -83,8 +31,19 @@ CcsContext::CcsContext(const CcsContext &parent, const std::string &name,
     searchState(SearchState::newChild(parent.searchState,
         Key(name, values))) {}
 
-std::string CcsContext::getString(const std::string &propertyName) const {
-  return "TODO"; // TODO
+const CcsProperty &CcsContext::findProperty(const std::string &propertyName,
+    bool locals) const {
+  const CcsProperty *prop = searchState->findProperty(propertyName, locals,
+      true);
+  if (!prop) prop = searchState->findProperty(propertyName, locals, false);
+  if (prop) return *prop;
+  return Missing;
+}
+
+const std::string &CcsContext::getString(const std::string &propertyName) const {
+  const CcsProperty &prop(getProperty(propertyName));
+  if (!prop.exists()) throw no_such_property(propertyName, *this);
+  return prop.value();
 }
 
 }

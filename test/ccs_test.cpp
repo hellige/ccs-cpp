@@ -8,11 +8,12 @@ using namespace ccs;
 
 namespace ccs { class ImportResolver {}; } // TODO delete
 
-// TODO
 TEST(CcsTest, Load) {
   CcsDomain ccs;
-  std::istringstream input("");
+  std::istringstream input("foo.bar > baz.quux: frob = 'nitz'");
   ImportResolver resolver;
   ccs.loadCcsStream(input, "<literal>", resolver);
-  EXPECT_TRUE(true);
+  CcsContext root = ccs.build();
+  CcsContext ctx = root.constrain("foo", {"bar"}).constrain("baz", {"quux"});
+  ASSERT_NO_THROW(EXPECT_EQ("nitz", ctx.getString("frob")));
 }

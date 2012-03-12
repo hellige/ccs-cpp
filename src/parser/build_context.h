@@ -1,11 +1,13 @@
 #ifndef BUILD_CONTEXT_H_
 #define BUILD_CONTEXT_H_
 
+#include "ccs/types.h"
 
 namespace ccs {
 
 class DagBuilder;
 class Node;
+namespace ast { class PropDef; }
 namespace ast { class SelectorLeaf; }
 
 namespace bc {
@@ -24,6 +26,7 @@ public:
   BuildContext *descendant(Node &node);
   BuildContext *conjunction(Node &node, BuildContext &baseContext);
   BuildContext *disjunction(Node &node, BuildContext &baseContext);
+  void addProperty(const ast::PropDef &propDef);
 };
 
 class Descendant : public BuildContext {

@@ -1,6 +1,7 @@
 #ifndef CCS_KEY_H_
 #define CCS_KEY_H_
 
+#include <algorithm>
 #include <map>
 #include <set>
 #include <string>
@@ -11,7 +12,7 @@
 namespace ccs {
 
 class Key {
-  std::map<std::string, std::set<std::string>> values_;
+  std::map<std::string, std::set<std::string>> values_; // TODO ordering for deterministic log/test
   Specificity specificity_;
 
 public:
@@ -27,7 +28,10 @@ public:
   Key &operator=(const Key &) = default;
   ~Key() = default;
 
-  bool operator<(const Key &) const { return false; } // TODO
+  const Specificity &specificity() const { return specificity_; }
+
+  bool operator<(const Key &that) const
+    { return values_ < that.values_; }
 
   void addName(const std::string &name) {
     if (values_.find(name) == values_.end()) {
@@ -47,6 +51,32 @@ public:
       specificity_.values++;
     }
     return changed;
+  }
+
+  bool addAll(const Key &key) {
+    bool changed = false;
+    for (auto it = key.values_.cbegin(); it != key.values_.cend(); ++it)
+        for (auto it2 = it->second.cbegin(); it2 != it->second.cend(); ++it2)
+            changed |= addValue(it->first, *it2);
+    return changed;
+  }
+
+  /*
+   * treating this as a pattern, see whether it matches the given specific
+   * key. this is asymmetric because the given key can have unmatched (extra)
+   * names/values, but the current object must fully match the key. wildcards
+   * also match on the current object, but not on the given key.
+   * returns true if this object, as a pattern, matches the given key.
+   */
+  bool matches(Key k) const {
+    for (auto it = values_.cbegin(); it != values_.cend(); ++it) {
+      auto valSet = k.values_.find(it->first);
+      if (valSet == k.values_.cend()) return false;
+      if (!std::includes(valSet->second.cbegin(), valSet->second.cend(),
+          it->second.cbegin(), it->second.cend()))
+        return false;
+    }
+    return true;
   }
 };
 

@@ -15,6 +15,8 @@ class ImportResolver;
 class CcsLogger {
 public:
   static CcsLogger &StdErr;
+  virtual ~CcsLogger() {}
+  virtual void warn(const std::string &msg) = 0;
 };
 
 class CcsDomain {

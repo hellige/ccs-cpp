@@ -1,0 +1,61 @@
+Basic test
+---
+foo.bar > baz.quux: frob = 'nitz'
+---
+foo.bar baz.quux: frob = nitz
+===
+
+Best before closest
+---
+second.id: test = "correct"
+first second: test = "incorrect"
+---
+first second.id: test = correct
+===
+
+Tied specificities
+---
+second.class2: test = "foo"
+second.class1: test = "correct"
+---
+first second.class1.class2: test = correct
+===
+
+Context
+---
+@context (a >)
+test = 'correct1'
+b > a: test = 'correct2'
+---
+b a: test = correct1
+b a b a: test = correct2
+===
+
+Local beats heritable
+---
+a {
+  @local test = 'local';
+  test = 'heritable';
+}
+---
+a: test = local
+a b: test = heritable
+===
+
+Override
+---
+a.b.c d : test = 'incorrect'
+a : @override test = 'correct'
+---
+a.b.c d: test = correct
+===
+
+Constraints in CCS
+---
+a.b: @constrain a.c
+a.b.c: @constrain d.e
+a.b.c/d.e: test = "correct"
+---
+a.b: test = correct
+===
+

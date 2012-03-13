@@ -22,7 +22,7 @@ struct TallyMap {
 
 class SearchState {
   std::shared_ptr<SearchState> parent;
-  std::map<Specificity, std::set<Node*>> nodes; // TODO reverse order? should it hold shared pointers or what?
+  std::map<Specificity, std::set<Node*>> nodes; // TODO should it hold shared pointers or what?
   TallyMap tallyMap;
   CcsLogger &log;
   Key key;

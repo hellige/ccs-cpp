@@ -69,7 +69,7 @@ TEST_T = out/test/run_tests
 
 default: all
 
-all: echo $(ALL_T) $(TESTS_PASSED) $(CP_INCLUDE) $(TARBALL)
+all: $(ALL_T) $(TESTS_PASSED) $(CP_INCLUDE) $(TARBALL)
 
 $(FIG_MAIN): package.fig
 	fig -m -c build && touch $@
@@ -119,7 +119,7 @@ $(TEST_T): $(TEST_O) $(LIB_A)
 $(TARBALL): $(ALL_T) $(CP_INCLUDE)
 	tar zcfp $@ dist
 
-$(TESTS_PASSED): $(TEST_T)
+$(TESTS_PASSED): $(TEST_T) tests.txt
 	LD_LIBRARY_PATH=$(LIB_PATH) $(TEST_T)
 	touch $(TESTS_PASSED)
 	

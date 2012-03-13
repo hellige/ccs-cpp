@@ -38,8 +38,6 @@ struct ccs_grammar : qi::grammar<Iterator, ast::Nested(), qi::rule<Iterator>> {
   qi::rule<I> blockComment;
   qi::rule<I> skipper;
 
-  typedef qi::rule<I, typeof(skipper)> spacerule;
-
   qi::rule<I, string()> ident;
   qi::rule<I, string()> strng;
   qi::rule<I, void(ast::PropDef &)> modifiers;
@@ -120,7 +118,7 @@ struct ccs_grammar : qi::grammar<Iterator, ast::Nested(), qi::rule<Iterator>> {
 
     // rules, rulesets...
     import %= lit("@import") >> strng;
-    constraint = lit("@constraint")
+    constraint %= lit("@constrain")
         >> singlestep(bind(&ast::Constraint::key_, _val));
     nested = selector [bind(&ast::Nested::selector_, _val) = _1] >>
         (':' >> (import | constraint | property)

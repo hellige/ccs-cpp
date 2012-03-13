@@ -12,7 +12,7 @@
 
 namespace ccs {
 
-class Property : public CcsProperty {
+struct Property : public CcsProperty {
   std::string value_;
   Origin origin;
   unsigned propertyNumber;

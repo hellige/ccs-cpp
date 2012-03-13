@@ -74,3 +74,8 @@ TEST(ParserTest, SelectorSections) {
   EXPECT_TRUE(parser.parse("bar > baz {}"));
   EXPECT_TRUE(parser.parse("bar baz {}"));
 }
+
+TEST(ParserTest, Constraints) {
+  P parser;
+  EXPECT_TRUE(parser.parse("a.b: @constrain a.c"));
+}

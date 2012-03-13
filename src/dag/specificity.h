@@ -12,7 +12,7 @@ struct Specificity {
 
   bool operator<(const Specificity &s) const {
     if (values < s.values) return true;
-    if (names < s.names) return true;
+    if (values == s.values && names < s.names) return true;
     return false;
   }
 

@@ -141,6 +141,15 @@ a : @override test = 'correct'
 a.b.c d: test = correct
 ===
 
+Same step
+---
+a.b.c d.e: test = "nope"
+a.b.c/d.e: test = "yep"
+---
+a.b.c d.e: test = nope
+a.b.c/d.e: test = yep
+===
+
 Constraints in CCS
 ---
 a.b: @constrain a.c

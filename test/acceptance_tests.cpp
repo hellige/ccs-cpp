@@ -22,7 +22,8 @@ namespace phoenix = boost::phoenix;
 namespace ccs { class ImportResolver {}; } // TODO delete
 
 struct Assertion {
-  typedef std::vector<std::pair<string, std::vector<string>>> C;
+  typedef std::pair<string, std::vector<string>> NameVals;
+  typedef std::vector<std::vector<NameVals>> C;
   C constraints;
   string property;
   string value;
@@ -55,6 +56,7 @@ struct grammar : qi::grammar<Iterator, std::vector<CcsTestCase>()> {
   qi::rule<I, std::vector<CcsTestCase>()> testcases;
   qi::rule<I, CcsTestCase()> testcase;
   qi::rule<I, string()> line, block, strng, ident;
+  qi::rule<I, Assertion::NameVals()> namevals;
   qi::rule<I, Assertion()> assertion;
 
   grammar() : grammar::base_type(testcases) {
@@ -64,8 +66,9 @@ struct grammar : qi::grammar<Iterator, std::vector<CcsTestCase>()> {
     auto sep = "---" >> qi::eol;
     line %= *(qi::print - qi::eol) >> qi::eol;
     block %= *(qi::char_ - sep);
-    auto namevals = ident >> *("." >> ident);
-    assertion %= -(namevals % +qi::space) >> ": " >> ident >> " = " >> ident
+    namevals = ident >> *("." >> ident);
+    auto constraints = namevals >> *("/" >> namevals);
+    assertion %= -(constraints % +qi::space >> ": ") >> ident >> " = " >> ident
         >> qi::eol;
     testcase = line >> sep >> block >> sep >> +assertion >> "===" >> +qi::eol;
     testcases %= *testcase >> qi::eoi;
@@ -109,8 +112,12 @@ TEST_P(AcceptanceTests, Load) {
   for (auto it = test.assertions.cbegin(); it != test.assertions.cend(); ++it) {
     CcsContext ctx = root;
     auto &cs = it->constraints;
-    for (auto it2 = cs.cbegin(); it2 != cs.cend(); ++it2)
-      ctx = ctx.constrain(it2->first, it2->second);
+    for (auto it2 = cs.cbegin(); it2 != cs.cend(); ++it2) {
+      CcsContext::Builder b = ctx.builder();
+      for (auto it3 = it2->cbegin(); it3 != it2->cend(); ++it3)
+        b.add(it3->first, it3->second);
+      ctx = b.build();
+    }
     ASSERT_NO_THROW(EXPECT_EQ(it->value, ctx.getString(it->property)));
   }
 }

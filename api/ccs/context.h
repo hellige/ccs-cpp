@@ -28,7 +28,9 @@ public:
   CcsContext &operator=(const CcsContext &that) = default;
   ~CcsContext() = default;
 
-  // TODO Builder builder();
+  class Builder;
+
+  Builder builder();
 
   CcsContext constrain(const std::string &name) const
     { return CcsContext(*this, name); }
@@ -45,6 +47,24 @@ public:
 private:
   const CcsProperty &findProperty(const std::string &propertyName,
       bool locals) const;
+};
+
+class CcsContext::Builder {
+  class Impl;
+  std::unique_ptr<Impl> impl;
+
+public:
+  Builder(const CcsContext &context);
+  Builder(const Builder &);
+  Builder &operator=(const Builder &);
+  ~Builder();
+
+  CcsContext build();
+
+  Builder &add(const std::string &name)
+    { return add(name, {}); }
+  Builder &add(const std::string &name,
+      const std::vector<std::string> &values);
 };
 
 struct no_such_property : public std::exception {

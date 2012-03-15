@@ -31,6 +31,8 @@ CcsContext::CcsContext(const CcsContext &parent, const std::string &name,
     searchState(SearchState::newChild(parent.searchState,
         Key(name, values))) {}
 
+CcsContext::Builder CcsContext::builder() { return Builder(*this); }
+
 const CcsProperty &CcsContext::findProperty(const std::string &propertyName,
     bool locals) const {
   const CcsProperty *prop = searchState->findProperty(propertyName, locals,
@@ -45,5 +47,34 @@ const std::string &CcsContext::getString(const std::string &propertyName) const 
   if (!prop.exists()) throw no_such_property(propertyName, *this);
   return prop.value();
 }
+
+
+struct CcsContext::Builder::Impl {
+  CcsContext context;
+  Key key;
+  Impl(const CcsContext &context) : context(context) {}
+};
+
+CcsContext::Builder::Builder(const CcsContext &context) :
+    impl(new Impl(context)) {}
+CcsContext::Builder::Builder(const Builder &that) :
+    impl(new Impl(*that.impl)) {}
+CcsContext::Builder &CcsContext::Builder::operator=(
+    const CcsContext::Builder &that) {
+  impl.reset(new Impl(*that.impl));
+  return *this;
+}
+CcsContext::Builder::~Builder() {}
+
+CcsContext CcsContext::Builder::build()
+  { return CcsContext(impl->context, impl->key); }
+CcsContext::Builder &CcsContext::Builder::add(const std::string &name,
+    const std::vector<std::string> &values) {
+  impl->key.addName(name);
+  for (auto it = values.cbegin(); it != values.cend(); ++it)
+    impl->key.addValue(name, *it);
+  return *this;
+}
+
 
 }

@@ -19,8 +19,6 @@ using std::string;
 namespace qi = boost::spirit::qi;
 namespace phoenix = boost::phoenix;
 
-namespace ccs { class ImportResolver {}; } // TODO delete
-
 struct Assertion {
   typedef std::pair<string, std::vector<string>> NameVals;
   typedef std::vector<std::vector<NameVals>> C;
@@ -105,8 +103,7 @@ TEST_P(AcceptanceTests, Load) {
   const CcsTestCase &test = GetParam();
   CcsDomain ccs;
   std::istringstream input(test.ccs);
-  ImportResolver resolver;
-  ccs.loadCcsStream(input, "<literal>", resolver);
+  ccs.loadCcsStream(input, "<literal>", ImportResolver::None);
   CcsContext root = ccs.build();
 
   for (auto it = test.assertions.cbegin(); it != test.assertions.cend(); ++it) {

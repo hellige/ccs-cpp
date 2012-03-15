@@ -20,16 +20,16 @@ public:
 
   virtual Node &node() { return node_; }
   virtual Node &traverse(ast::SelectorLeaf *selector)
-    { return selector->traverse(*this); }
+    { return selector->traverse(std::make_shared<Descendant>(*this)); }
 };
 
 template <typename T>
 class TallyBuildContext : public BuildContext {
   Node &firstNode_;
-  BuildContext &baseContext_;
+  BuildContext::P baseContext_;
 
 public:
-  TallyBuildContext(DagBuilder &dag, Node &node, BuildContext &baseContext) :
+  TallyBuildContext(DagBuilder &dag, Node &node, BuildContext::P baseContext) :
     BuildContext(dag),
     firstNode_(node),
     baseContext_(baseContext) {}
@@ -59,14 +59,18 @@ public:
   }
 };
 
-BuildContext *BuildContext::descendant(DagBuilder &dag, Node &node)
-  { return new Descendant(dag, node); }
-BuildContext *BuildContext::descendant(Node &node)
-  { return new Descendant(dag_, node); }
-BuildContext *BuildContext::conjunction(Node &node, BuildContext &baseContext)
-  { return new TallyBuildContext<AndTally>(dag_, node, baseContext); }
-BuildContext *BuildContext::disjunction(Node &node, BuildContext &baseContext)
-  { return new TallyBuildContext<OrTally>(dag_, node, baseContext); }
+BuildContext::P BuildContext::descendant(DagBuilder &dag, Node &node)
+  { return std::make_shared<Descendant>(dag, node); }
+BuildContext::P BuildContext::descendant(Node &node)
+  { return std::make_shared<Descendant>(dag_, node); }
+BuildContext::P BuildContext::conjunction(Node &node,
+    BuildContext::P baseContext)
+  { return std::make_shared<TallyBuildContext<AndTally>>(dag_, node,
+      baseContext); }
+BuildContext::P BuildContext::disjunction(Node &node,
+    BuildContext::P baseContext)
+  { return std::make_shared<TallyBuildContext<OrTally>>(dag_, node,
+      baseContext); }
 
 void BuildContext::addProperty(const ast::PropDef &propDef) {
   node().addProperty(propDef.name_, Property(propDef.value_.strVal_,

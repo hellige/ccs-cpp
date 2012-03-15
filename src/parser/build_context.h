@@ -1,5 +1,7 @@
-#ifndef BUILD_CONTEXT_H_
-#define BUILD_CONTEXT_H_
+#ifndef CCS_PARSER_BUILD_CONTEXT_H_
+#define CCS_PARSER_BUILD_CONTEXT_H_
+
+#include <memory>
 
 #include "ccs/types.h"
 
@@ -17,19 +19,20 @@ protected:
   BuildContext(DagBuilder &dag) : dag_(dag) {}
 
 public:
+  typedef std::shared_ptr<BuildContext> P;
   virtual ~BuildContext() {}
 
   virtual Node &node() = 0;
   virtual Node &traverse(ast::SelectorLeaf *selector) = 0;
 
-  static BuildContext *descendant(DagBuilder &dag, Node &root);
-  BuildContext *descendant(Node &node);
-  BuildContext *conjunction(Node &node, BuildContext &baseContext);
-  BuildContext *disjunction(Node &node, BuildContext &baseContext);
+  static BuildContext::P descendant(DagBuilder &dag, Node &root);
+  BuildContext::P descendant(Node &node);
+  BuildContext::P conjunction(Node &node, BuildContext::P baseContext);
+  BuildContext::P disjunction(Node &node, BuildContext::P baseContext);
   void addProperty(const ast::PropDef &propDef);
 };
 
 }
 
 
-#endif /* BUILD_CONTEXT_H_ */
+#endif /* CCS_PARSER_BUILD_CONTEXT_H_ */

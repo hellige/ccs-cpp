@@ -4,7 +4,6 @@
 #include <boost/lexical_cast.hpp>
 #include <boost/variant/recursive_variant.hpp>
 
-#include <deque>
 #include <memory>
 #include <string>
 #include <vector>
@@ -20,13 +19,6 @@ class Node;
 class BuildContext;
 
 namespace ast {
-
-// TODO destructors or shared_ptrs...
-
-struct Import {
-  std::string location_;
-};
-
 
 struct Value {
   std::string strVal_; // TODO generalize?
@@ -61,20 +53,23 @@ struct Constraint {
   Key key_;
 };
 
+struct Import;
 struct Nested;
 
 typedef boost::variant<
-    Import,
     PropDef,
     Constraint,
+    boost::recursive_wrapper<Import>,
     boost::recursive_wrapper<Nested>>
   AstRule;
 
 struct SelectorLeaf;
 
 struct SelectorBranch {
-  virtual BuildContext *traverse(BuildContext &context,
-      BuildContext &baseContext) = 0;
+  virtual ~SelectorBranch() {}
+  virtual std::shared_ptr<BuildContext> traverse(
+      std::shared_ptr<BuildContext> context,
+      std::shared_ptr<BuildContext> baseContext) = 0;
 
   static SelectorBranch *descendant(SelectorLeaf *first);
   static SelectorBranch *conjunction(SelectorLeaf *first);
@@ -83,7 +78,7 @@ struct SelectorBranch {
 
 struct SelectorLeaf {
   virtual ~SelectorLeaf() {};
-  virtual Node &traverse(BuildContext &context) = 0;
+  virtual Node &traverse(std::shared_ptr<BuildContext> context) = 0;
   virtual SelectorLeaf *descendant(SelectorLeaf *right) = 0;
   virtual SelectorLeaf *conjunction(SelectorLeaf *right) = 0;
   virtual SelectorLeaf *disjunction(SelectorLeaf *right) = 0;
@@ -92,20 +87,19 @@ struct SelectorLeaf {
 };
 
 struct Nested {
-  SelectorBranch *selector_;
+  std::shared_ptr<SelectorBranch> selector_;
   std::vector<AstRule> rules_;
 
-  Nested() : selector_(NULL) {}
-
   void addRule(const AstRule &rule) { rules_.push_back(rule); }
-
-  void addTo(BuildContext &buildContext, BuildContext &baseContext);
-
+  void addTo(std::shared_ptr<BuildContext> buildContext,
+      std::shared_ptr<BuildContext> baseContext);
   bool resolveImports(ImportResolver &importResolver, Loader &loader,
-      std::deque<std::string> inProgress) {
-    // TODO implement me!
-    return true;
-  }
+      std::vector<std::string> &inProgress);
+};
+
+struct Import {
+  std::string location;
+  Nested ast;
 };
 
 }}

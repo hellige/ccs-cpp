@@ -1,7 +1,6 @@
-#ifndef LOADER_H_
-#define LOADER_H_
+#ifndef CCS_PARSER_LOADER_H_
+#define CCS_PARSER_LOADER_H_
 
-#include <deque>
 #include <istream>
 #include <string>
 
@@ -11,15 +10,18 @@
 
 namespace ccs {
 
-// TODO move
-class ImportResolver;
-
 class Loader {
+  CcsLogger &log;
+
 public:
+  Loader(CcsLogger &log) : log(log) {}
+
+  CcsLogger &logger() { return log; }
+
   void loadCcsStream(std::istream &stream, const std::string &fileName,
       DagBuilder &dag, ImportResolver &importResolver) {
     ast::Nested ast;
-    std::deque<std::string> inProgress;
+    std::vector<std::string> inProgress;
     if (parseCcsStream(stream, fileName, importResolver, inProgress, ast)) {
       // everything parsed, no errors. now it's safe to modify the dag...
       ast.addTo(dag.buildContext(), dag.buildContext());
@@ -29,7 +31,7 @@ public:
   }
 
   bool parseCcsStream(std::istream &stream, const std::string &fileName,
-      ImportResolver &importResolver, std::deque<std::string> &inProgress,
+      ImportResolver &importResolver, std::vector<std::string> &inProgress,
       ast::Nested &ast) {
     Parser parser;
     bool result = parser.parseCcsStream(stream, ast);
@@ -51,4 +53,4 @@ public:
 
 
 
-#endif /* LOADER_H_ */
+#endif /* CCS_PARSER_LOADER_H_ */

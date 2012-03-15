@@ -1,5 +1,5 @@
-#ifndef DOMAIN_H_
-#define DOMAIN_H_
+#ifndef CCS_DOMAIN_H_
+#define CCS_DOMAIN_H_
 
 #include <memory>
 #include <istream>
@@ -10,13 +10,20 @@
 namespace ccs {
 
 class DagBuilder;
-class ImportResolver;
 
 class CcsLogger {
 public:
   static CcsLogger &StdErr;
   virtual ~CcsLogger() {}
   virtual void warn(const std::string &msg) = 0;
+  virtual void error(const std::string &msg) = 0;
+};
+
+class ImportResolver {
+public:
+  static ImportResolver &None;
+  virtual ~ImportResolver() {}
+  virtual std::istream resolve(const std::string &location) = 0;
 };
 
 class CcsDomain {
@@ -39,4 +46,4 @@ public:
 }
 
 
-#endif /* DOMAIN_H_ */
+#endif /* CCS_DOMAIN_H_ */

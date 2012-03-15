@@ -1,5 +1,5 @@
-#ifndef CCS_SPECIFICITY_H_
-#define CCS_SPECIFICITY_H_
+#ifndef CCS_DAG_SPECIFICITY_H_
+#define CCS_DAG_SPECIFICITY_H_
 
 namespace ccs {
 
@@ -23,4 +23,4 @@ struct Specificity {
 
 }
 
-#endif /* CCS_SPECIFICITY_H_ */
+#endif /* CCS_DAG_SPECIFICITY_H_ */

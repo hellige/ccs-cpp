@@ -1,5 +1,5 @@
-#ifndef CCS_KEY_H_
-#define CCS_KEY_H_
+#ifndef CCS_DAG_KEY_H_
+#define CCS_DAG_KEY_H_
 
 #include <algorithm>
 #include <map>
@@ -82,4 +82,4 @@ public:
 
 }
 
-#endif /* CCS_KEY_H_ */
+#endif /* CCS_DAG_KEY_H_ */

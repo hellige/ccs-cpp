@@ -1,5 +1,5 @@
-#ifndef CCS_NODE_H_
-#define CCS_NODE_H_
+#ifndef CCS_DAG_NODE_H_
+#define CCS_DAG_NODE_H_
 
 #include <map>
 #include <memory>
@@ -51,20 +51,21 @@ public:
   }
 
   void getChildren(const Key &key, const Specificity &spec,
-      SearchState &searchState) {
-    for (auto it = children.begin(); it != children.end(); ++it) {
+      SearchState &searchState) const {
+    for (auto it = children.cbegin(); it != children.cend(); ++it) {
       if (it->first.matches(key))
         it->second->activate(spec + it->first.specificity(), searchState);
     }
   }
 
-  std::vector<Property *> getProperty(const std::string &name, bool locals) {
-    std::pair<std::multimap<std::string, Property>::iterator,
-      std::multimap<std::string, Property>::iterator> range(props.end(),
-          props.end());
+  std::vector<const Property *> getProperty(const std::string &name,
+      bool locals) const {
+    std::pair<std::multimap<std::string, Property>::const_iterator,
+      std::multimap<std::string, Property>::const_iterator> range(props.cend(),
+          props.cend());
     if (locals) range = localProps.equal_range(name);
     if (range.first == range.second) range = props.equal_range(name);
-    std::vector<Property *> result;
+    std::vector<const Property *> result;
     for (; range.first != range.second; ++range.first)
       result.push_back(&range.first->second);
     return result;
@@ -91,4 +92,4 @@ public:
 
 }
 
-#endif /* CCS_NODE_H_ */
+#endif /* CCS_DAG_NODE_H_ */

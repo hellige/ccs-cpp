@@ -1,5 +1,5 @@
-#ifndef SEARCH_STATE_H_
-#define SEARCH_STATE_H_
+#ifndef CCS_SEARCH_STATE_H_
+#define CCS_SEARCH_STATE_H_
 
 #include <map>
 #include <memory>
@@ -17,24 +17,29 @@ class Node;
 class TallyState;
 
 class SearchState {
+  // we need to be sure to retain a reference to the root of the dag. the
+  // simplest way is to just make everything in 'nodes' shared_ptrs, but that
+  // seems awfully heavy-handed. instead we'll just retain a direct reference
+  // to the root in the root search state. the parent links are shared, so
+  // this is sufficient.
+  std::shared_ptr<const Node> root;
   std::shared_ptr<SearchState> parent;
-  std::map<Specificity, std::set<Node*>> nodes; // TODO should it hold shared pointers or what?
-  std::map<const AndTally *, TallyState *> tallyMap;
+  std::map<Specificity, std::set<const Node *>> nodes;
+  std::map<const AndTally *, std::unique_ptr<const TallyState>> tallyMap;
   CcsLogger &log;
   Key key;
   bool constraintsChanged;
 
   SearchState(const std::shared_ptr<SearchState> &parent,
-      const Key &key, CcsLogger &log) :
-        parent(parent),
-        log(log),
-        key(key) {}
+      const Key &key, CcsLogger &log);
 
 public:
-  SearchState(Node &root, const std::shared_ptr<SearchState> &parent,
+  SearchState(std::shared_ptr<const Node> &root,
+      const std::shared_ptr<SearchState> &parent,
       CcsLogger &log);
   SearchState(const SearchState &) = delete;
   SearchState &operator=(const SearchState &) = delete;
+  ~SearchState();
 
   static std::shared_ptr<SearchState> newChild(
       const std::shared_ptr<SearchState> &parent, const Key &key);
@@ -53,14 +58,10 @@ public:
     constraintsChanged |= key.addAll(constraints);
   }
 
-
-  TallyState *getTallyState(const AndTally *tally);
-
-  void setTallyState(const AndTally *tally, TallyState *state) {
-    tallyMap[tally] = state;
-  }
+  const TallyState *getTallyState(const AndTally *tally);
+  void setTallyState(const AndTally *tally, const TallyState *state);
 };
 
 }
 
-#endif /* SEARCH_STATE_H_ */
+#endif /* CCS_SEARCH_STATE_H_ */

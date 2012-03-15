@@ -1,5 +1,5 @@
-#ifndef DAG_BUILDER_H_
-#define DAG_BUILDER_H_
+#ifndef CCS_DAG_DAG_BUILDER_H_
+#define CCS_DAG_DAG_BUILDER_H_
 
 #include <memory>
 
@@ -19,12 +19,12 @@ public:
     root_(new Node()),
     buildContext_(BuildContext::descendant(*this, *root_)) {}
 
-  Node &root() { return *root_; }
-  BuildContext &buildContext() { return *buildContext_; }
+  std::shared_ptr<const Node> root() { return root_; }
+  BuildContext::P buildContext() { return buildContext_; }
   int nextProperty() { return nextProperty_++; }
 };
 
 }
 
 
-#endif /* DAG_BUILDER_H_ */
+#endif /* CCS_DAG_DAG_BUILDER_H_ */

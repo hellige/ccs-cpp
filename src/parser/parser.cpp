@@ -17,12 +17,12 @@ namespace phoenix = boost::phoenix;
 
 BOOST_FUSION_ADAPT_STRUCT(
     ccs::ast::Import,
-    (string, location_)
+    (string, location)
 )
 
 BOOST_FUSION_ADAPT_STRUCT(
     ccs::ast::Nested,
-    (ccs::ast::SelectorBranch *, selector_)
+    (std::shared_ptr<ccs::ast::SelectorBranch>, selector_)
     (std::vector<ccs::ast::AstRule>, rules_)
 )
 
@@ -43,7 +43,7 @@ struct ccs_grammar : qi::grammar<Iterator, ast::Nested(), qi::rule<Iterator>> {
   qi::rule<I, void(ast::PropDef &)> modifiers;
   qi::rule<I, ast::Value()> val;
   qi::rule<I, ast::PropDef(), typeof(skipper)> property;
-  qi::rule<I, ast::SelectorBranch*(), typeof(skipper)> selector;
+  qi::rule<I, std::shared_ptr<ast::SelectorBranch>(), typeof(skipper)> selector;
   qi::rule<I, void(Key &, const string &)> vals;
   qi::rule<I, void(Key &), qi::locals<string>> singlestep;
   qi::rule<I, void(Key &)> stepsuffix;
@@ -131,11 +131,11 @@ struct ccs_grammar : qi::grammar<Iterator, ast::Nested(), qi::rule<Iterator>> {
     ruleset %= -context >> *rule >> eoi;
   }
 
-  static ast::SelectorBranch *branch(ast::SelectorLeaf *leaf,
+  static std::shared_ptr<ast::SelectorBranch> branch(ast::SelectorLeaf *leaf,
       boost::optional<string> opt) {
-    return opt ?
+    return std::shared_ptr<ast::SelectorBranch>(opt ?
         ast::SelectorBranch::descendant(leaf)
-      : ast::SelectorBranch::conjunction(leaf);
+      : ast::SelectorBranch::conjunction(leaf));
   }
 
   bool parse(I &iter, I end, ast::Nested &ast) {

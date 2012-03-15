@@ -1,5 +1,5 @@
-#ifndef CONTEXT_H_
-#define CONTEXT_H_
+#ifndef CCS_CONTEXT_H_
+#define CCS_CONTEXT_H_
 
 #include <memory>
 #include <string>
@@ -17,7 +17,7 @@ class CcsContext {
   std::shared_ptr<SearchState> searchState;
 
   friend class CcsDomain;
-  CcsContext(Node &root, CcsLogger &log);
+  CcsContext(std::shared_ptr<const Node> root, CcsLogger &log);
   CcsContext(const CcsContext &parent, const Key &key);
   CcsContext(const CcsContext &parent, const std::string &name);
   CcsContext(const CcsContext &parent, const std::string &name,
@@ -81,4 +81,4 @@ struct no_such_property : public std::exception {
 
 }
 
-#endif /* CONTEXT_H_ */
+#endif /* CCS_CONTEXT_H_ */

@@ -4,7 +4,7 @@
 
 namespace ccs {
 
-TallyState *TallyState::clone() {
+TallyState *TallyState::clone() const {
   TallyState *next = new TallyState(tally);
   next->firstMatched = firstMatched;
   next->firstMatch = firstMatch;
@@ -13,7 +13,7 @@ TallyState *TallyState::clone() {
   return next;
 }
 
-TallyState *TallyState::activate(Node &leg, const Specificity &spec) {
+TallyState *TallyState::activate(Node &leg, const Specificity &spec) const {
   // NB reference equality in the below...
   TallyState *next = clone();
   if (&tally.firstLeg_ == &leg) {
@@ -36,7 +36,7 @@ Tally::~Tally() {}
 
 void AndTally::activate(Node &leg, const Specificity &spec,
     SearchState &searchState) {
-  TallyState *state = searchState.getTallyState(this)->activate(leg, spec);
+  const TallyState *state = searchState.getTallyState(this)->activate(leg, spec);
   searchState.setTallyState(this, state);
   // seems like this could lead to spurious warnings, but see comment below...
   if (state->fullyMatched())

@@ -19,11 +19,11 @@ class TallyState {
   Specificity firstMatch;
   Specificity secondMatch;
 
-  TallyState *activate(Node &leg, const Specificity &spec);
-  TallyState *clone();
+  TallyState *activate(Node &leg, const Specificity &spec) const;
+  TallyState *clone() const;
 
-  bool fullyMatched() { return firstMatched && secondMatched; }
-  Specificity specificity() { return firstMatch + secondMatch; }
+  bool fullyMatched() const { return firstMatched && secondMatched; }
+  Specificity specificity() const { return firstMatch + secondMatch; }
 
 public:
   TallyState(const AndTally &tally) :
@@ -60,10 +60,14 @@ public:
 
 class AndTally : public Tally {
   friend class TallyState;
+  TallyState emptyState_;
+
 public:
-  AndTally(Node &firstLeg, Node &secondLeg) : Tally(firstLeg, secondLeg) {}
+  AndTally(Node &firstLeg, Node &secondLeg) :
+    Tally(firstLeg, secondLeg), emptyState_(*this) {}
   virtual void activate(Node &leg, const Specificity &spec,
       SearchState &searchState);
+  const TallyState *emptyState() const { return &emptyState_; }
 };
 
 }

@@ -10,12 +10,21 @@
 
 namespace ccs {
 
-SearchState::SearchState(Node &root, const std::shared_ptr<SearchState> &parent,
+SearchState::SearchState(const std::shared_ptr<SearchState> &parent,
+    const Key &key, CcsLogger &log) :
+      parent(parent),
+      log(log),
+      key(key) {}
+
+SearchState::SearchState(std::shared_ptr<const Node> &root,
+    const std::shared_ptr<SearchState> &parent,
     CcsLogger &log) :
-      parent(parent), log(log) {
-  std::set<Node *> s = { &root };
+      root(root), parent(parent), log(log) {
+  std::set<const Node *> s = { root.get() };
   nodes[Specificity()] = s;
 }
+
+SearchState::~SearchState() {}
 
 std::shared_ptr<SearchState> SearchState::newChild(
     const std::shared_ptr<SearchState> &parent, const Key &key) {
@@ -60,7 +69,7 @@ const CcsProperty *SearchState::findProperty(const std::string &propertyName,
 const CcsProperty *SearchState::doSearch(const std::string &propertyName,
     bool locals, bool override) {
   for (auto it = nodes.crbegin(); it != nodes.crend(); ++it) {
-    std::vector<Property *> values;
+    std::vector<const Property *> values;
     for (auto it2 = it->second.cbegin(); it2 != it->second.cend(); ++it2) {
       auto valsAtNode = (*it2)->getProperty(propertyName, locals);
       for (auto it3 = valsAtNode.cbegin(); it3 != valsAtNode.cend(); ++it3)
@@ -84,11 +93,16 @@ const CcsProperty *SearchState::doSearch(const std::string &propertyName,
   return NULL;
 }
 
-TallyState *SearchState::getTallyState(const AndTally *tally) {
+const TallyState *SearchState::getTallyState(const AndTally *tally) {
   auto it = tallyMap.find(tally);
-  if (it != tallyMap.end()) return it->second;
+  if (it != tallyMap.end()) return it->second.get();
   if (parent) return parent->getTallyState(tally);
-  return new TallyState(*tally);
+  return tally->emptyState();;
+}
+
+void SearchState::setTallyState(const AndTally *tally,
+    const TallyState *state) {
+  tallyMap[tally].reset(state);
 }
 
 }

@@ -1,5 +1,5 @@
-#ifndef TYPES_H_
-#define TYPES_H_
+#ifndef CCS_TYPES_H_
+#define CCS_TYPES_H_
 
 #include <stdexcept>
 #include <string>
@@ -7,7 +7,6 @@
 namespace ccs {
 
 struct Origin {};
-struct Value {};
 
 struct CcsProperty {
   virtual ~CcsProperty() {}
@@ -17,4 +16,4 @@ struct CcsProperty {
 
 }
 
-#endif /* TYPES_H_ */
+#endif /* CCS_TYPES_H_ */

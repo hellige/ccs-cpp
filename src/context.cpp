@@ -17,7 +17,7 @@ struct MissingProp : public CcsProperty {
 
 namespace { MissingProp Missing; }
 
-CcsContext::CcsContext(Node &root, CcsLogger &log) :
+CcsContext::CcsContext(std::shared_ptr<const Node> root, CcsLogger &log) :
     searchState(new SearchState(root, std::shared_ptr<SearchState>(), log)) {}
 
 CcsContext::CcsContext(const CcsContext &parent, const Key &key) :

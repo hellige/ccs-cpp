@@ -9,6 +9,7 @@
 #include "search_state.h"
 #include "ccs/types.h"
 #include "dag/key.h"
+#include "dag/tally.h"
 
 namespace ccs {
 
@@ -33,12 +34,16 @@ class Node {
   std::map<Key, std::shared_ptr<Node>> children;
   std::multimap<std::string, Property> props;
   std::multimap<std::string, Property> localProps;
+  std::set<std::shared_ptr<Tally>> tallies_;
   Key constraints;
 
 public:
   Node() {}
   Node(const Node &) = delete;
   Node &operator=(const Node &) = delete;
+
+  const std::set<std::shared_ptr<Tally>> &tallies() { return tallies_; }
+  void addTally(std::shared_ptr<Tally> tally) { tallies_.insert(tally); }
 
   Node &addChild(const Key &key) {
     return *(*children.insert(std::make_pair(key, std::make_shared<Node>()))
@@ -68,7 +73,8 @@ public:
   void activate(const Specificity &spec, SearchState &searchState) {
     searchState.add(spec, this);
     searchState.constrain(constraints);
-  // TODO for (Tally tally : this.tallies) tally.activate(this, spec, searchState);
+    for (auto it = tallies_.begin(); it != tallies_.end(); ++it)
+      (*it)->activate(*this, spec, searchState);
   }
 
   void addConstraint(const Key &key) {

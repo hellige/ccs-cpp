@@ -11,16 +11,16 @@ namespace ccs {
 class DagBuilder {
   int nextProperty_;
   std::shared_ptr<Node> root_;
-  std::shared_ptr<bc::BuildContext> buildContext_;
+  std::shared_ptr<BuildContext> buildContext_;
 
 public:
   DagBuilder() :
     nextProperty_(0),
     root_(new Node()),
-    buildContext_(new bc::Descendant(*this, *root_)) {}
+    buildContext_(BuildContext::descendant(*this, *root_)) {}
 
   Node &root() { return *root_; }
-  bc::BuildContext &buildContext() { return *buildContext_; }
+  BuildContext &buildContext() { return *buildContext_; }
   int nextProperty() { return nextProperty_++; }
 };
 

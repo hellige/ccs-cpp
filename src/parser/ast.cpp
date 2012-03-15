@@ -8,10 +8,10 @@
 namespace ccs { namespace ast {
 
 struct AstVisitor : public boost::static_visitor<void> {
-  bc::BuildContext &buildContext;
-  bc::BuildContext &baseContext;
+  BuildContext &buildContext;
+  BuildContext &baseContext;
 
-  AstVisitor(bc::BuildContext &buildContext, bc::BuildContext &baseContext) :
+  AstVisitor(BuildContext &buildContext, BuildContext &baseContext) :
     buildContext(buildContext), baseContext(baseContext) {}
 
   void operator()(Import &import) const {
@@ -31,9 +31,8 @@ struct AstVisitor : public boost::static_visitor<void> {
   }
 };
 
-void Nested::addTo(bc::BuildContext &buildContext,
-    bc::BuildContext &baseContext) {
-  bc::BuildContext *bc = &buildContext;
+void Nested::addTo(BuildContext &buildContext, BuildContext &baseContext) {
+  BuildContext *bc = &buildContext;
   if (selector_ != NULL)
     bc = selector_->traverse(buildContext, baseContext);
   for (auto it = rules_.begin(); it != rules_.end(); ++it)
@@ -61,8 +60,8 @@ struct Wrap : public SelectorLeaf {
     return this;
   }
 
-  virtual Node &traverse(bc::BuildContext &context) {
-    bc::BuildContext *tmp = &context;
+  virtual Node &traverse(BuildContext &context) {
+    BuildContext *tmp = &context;
     for (auto it = branches.begin(); it != branches.end(); ++it)
       tmp = (*it)->traverse(*tmp, context);
     return tmp->traverse(right);
@@ -81,7 +80,7 @@ struct Step : public SelectorLeaf {
   virtual SelectorLeaf *disjunction(SelectorLeaf *right)
     { return new Wrap(SelectorBranch::disjunction(this), right); }
 
-  virtual Node &traverse(bc::BuildContext &context)
+  virtual Node &traverse(BuildContext &context)
     { return context.node().addChild(key_); }
 };
 
@@ -90,37 +89,37 @@ SelectorLeaf *SelectorLeaf::step(const Key &key) {
 }
 
 class BranchImpl : public SelectorBranch {
-  typedef std::function<bc::BuildContext *(bc::BuildContext &,
-      bc::BuildContext &)> Traverse;
+  typedef std::function<BuildContext *(BuildContext &,
+      BuildContext &)> Traverse;
   Traverse traverse_;
 
 public:
   BranchImpl(Traverse traverse)
   : traverse_(traverse) {}
 
-  virtual bc::BuildContext *traverse(bc::BuildContext &context,
-      bc::BuildContext &baseContext) {
+  virtual BuildContext *traverse(BuildContext &context,
+      BuildContext &baseContext) {
     return traverse_(context, baseContext);
   }
 };
 
 SelectorBranch *SelectorBranch::descendant(SelectorLeaf *first) {
-  return new BranchImpl([first](bc::BuildContext &context,
-      bc::BuildContext &baseContext) {
+  return new BranchImpl([first](BuildContext &context,
+      BuildContext &baseContext) {
     return context.descendant(context.traverse(first));
   });
 }
 
 SelectorBranch *SelectorBranch::conjunction(SelectorLeaf *first) {
-  return new BranchImpl([first](bc::BuildContext &context,
-      bc::BuildContext &baseContext) {
+  return new BranchImpl([first](BuildContext &context,
+      BuildContext &baseContext) {
     return context.conjunction(context.traverse(first), baseContext);
   });
 }
 
 SelectorBranch *SelectorBranch::disjunction(SelectorLeaf *first) {
-  return new BranchImpl([first](bc::BuildContext &context,
-      bc::BuildContext &baseContext) {
+  return new BranchImpl([first](BuildContext &context,
+      BuildContext &baseContext) {
     return context.disjunction(context.traverse(first), baseContext);
   });
 }

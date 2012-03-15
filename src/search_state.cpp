@@ -6,6 +6,7 @@
 #include "dag/key.h"
 #include "dag/node.h"
 #include "dag/specificity.h"
+#include "dag/tally.h"
 
 namespace ccs {
 
@@ -18,8 +19,8 @@ SearchState::SearchState(Node &root, const std::shared_ptr<SearchState> &parent,
 
 std::shared_ptr<SearchState> SearchState::newChild(
     const std::shared_ptr<SearchState> &parent, const Key &key) {
-  std::shared_ptr<SearchState> searchState(new SearchState(parent->tallyMap,
-      parent, key, parent->log));
+  std::shared_ptr<SearchState> searchState(new SearchState(parent, key,
+      parent->log));
 
   bool constraintsChanged;
   do {
@@ -81,6 +82,13 @@ const CcsProperty *SearchState::doSearch(const std::string &propertyName,
     }
   }
   return NULL;
+}
+
+TallyState *SearchState::getTallyState(const AndTally *tally) {
+  auto it = tallyMap.find(tally);
+  if (it != tallyMap.end()) return it->second;
+  if (parent) return parent->getTallyState(tally);
+  return new TallyState(*tally);
 }
 
 }

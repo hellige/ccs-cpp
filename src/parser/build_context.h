@@ -10,38 +10,26 @@ class Node;
 namespace ast { class PropDef; }
 namespace ast { class SelectorLeaf; }
 
-namespace bc {
-
 class BuildContext {
 protected:
   DagBuilder &dag_;
 
   BuildContext(DagBuilder &dag) : dag_(dag) {}
-  virtual ~BuildContext() {}
 
 public:
+  virtual ~BuildContext() {}
+
   virtual Node &node() = 0;
   virtual Node &traverse(ast::SelectorLeaf *selector) = 0;
 
+  static BuildContext *descendant(DagBuilder &dag, Node &root);
   BuildContext *descendant(Node &node);
   BuildContext *conjunction(Node &node, BuildContext &baseContext);
   BuildContext *disjunction(Node &node, BuildContext &baseContext);
   void addProperty(const ast::PropDef &propDef);
 };
 
-class Descendant : public BuildContext {
-  Node &node_;
-
-public:
-  Descendant(DagBuilder &dag, Node &node) :
-    BuildContext(dag),
-    node_(node) {}
-
-  virtual Node &node() { return node_; }
-  virtual Node &traverse(ast::SelectorLeaf *selector);
-};
-
-}}
+}
 
 
 #endif /* BUILD_CONTEXT_H_ */

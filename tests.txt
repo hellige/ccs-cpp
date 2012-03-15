@@ -5,6 +5,17 @@ foo.bar > baz.quux: frob = 'nitz'
 foo.bar baz.quux: frob = nitz
 ===
 
+Basic conjunction
+---
+frob = 'nope'
+a b: frob = 'nitz'
+---
+a: frob = nope
+b: frob = nope
+a b: frob = nitz
+b a: frob = nitz
+===
+
 Best before closest
 ---
 second.id: test = "correct"
@@ -21,6 +32,60 @@ second.class1: test = "correct"
 first second.class1.class2: test = correct
 ===
 
+Complex tie
+---
+bar.class2 : test1 = "incorrect"
+bar.class1 : test1 = "correct"
+bar.class1 foo : test2 = "incorrect 1"
+bar.class2 foo : test2 = "correct"
+bar foo : test2 = "incorrect 2"
+---
+bar.class1.class2: test1 = correct
+bar.class1.class2 foo: test2 = correct
+===
+
+Conjunction specificities
+---
+(a > b.b, a > b > c) c { test = 'correct' }
+c.c { test = 'incorrect' }
+---
+a b.b c.c: test = correct
+===
+
+Disjunction specificities
+---
+a > b, a > b > y.d { test = 'correct1' }
+x.c { test = 'correct2' }
+f.f > h, g > h { test = 'correct3' }
+h.k { test = 'incorrect' }
+---
+a b: test = correct1
+a b x.c: test = correct2
+a b x.c y.d: test = correct1
+a b x.c y.d f.f g h.k: test = correct3
+===
+
+Conjunction
+---
+a b { test = 'correct1' }
+a c c.class1 { test = 'correct2' }
+a b > { d { test = 'correct3' } }
+---
+a b: test = correct1
+a b c.class1: test = correct2
+a b d: test = correct3
+===
+
+Disjunction
+---
+a > c, c.b { test = 'correct1' }
+a > c > c { test = 'correct2' }
+---
+a b c: test = correct1
+a b c c: test = correct2
+a b c c c.b: test = correct1
+===
+
 Context
 ---
 @context (a >)
@@ -29,6 +94,18 @@ b > a: test = 'correct2'
 ---
 b a: test = correct1
 b a b a: test = correct2
+===
+
+Trailing combinator
+---
+a: test = "top"
+a { b >: test = "bottom" }
+
+test2 = "top"
+a > { b { c > { d { e: @local test2 = "bottom" }}}}
+---
+b a: test = bottom
+b a e c b d: test2 = bottom
 ===
 
 Local beats heritable
@@ -40,6 +117,20 @@ a {
 ---
 a: test = local
 a b: test = heritable
+===
+
+Order-dependent disjunction
+---
+a, b, d { x = 1 }
+b { x = 2 }
+c { x = 2 }
+
+(d, e) > f { y = 1 }
+d > f { y = 2 }
+---
+b: x = 2
+a c d: x = 1
+d f: y = 2
 ===
 
 Override

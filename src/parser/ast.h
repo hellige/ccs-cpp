@@ -17,7 +17,7 @@ namespace ccs {
 class Loader;
 class ImportResolver;
 class Node;
-namespace bc { class BuildContext; }
+class BuildContext;
 
 namespace ast {
 
@@ -73,8 +73,8 @@ typedef boost::variant<
 struct SelectorLeaf;
 
 struct SelectorBranch {
-  virtual bc::BuildContext *traverse(bc::BuildContext &context,
-      bc::BuildContext &baseContext) = 0;
+  virtual BuildContext *traverse(BuildContext &context,
+      BuildContext &baseContext) = 0;
 
   static SelectorBranch *descendant(SelectorLeaf *first);
   static SelectorBranch *conjunction(SelectorLeaf *first);
@@ -83,7 +83,7 @@ struct SelectorBranch {
 
 struct SelectorLeaf {
   virtual ~SelectorLeaf() {};
-  virtual Node &traverse(bc::BuildContext &context) = 0;
+  virtual Node &traverse(BuildContext &context) = 0;
   virtual SelectorLeaf *descendant(SelectorLeaf *right) = 0;
   virtual SelectorLeaf *conjunction(SelectorLeaf *right) = 0;
   virtual SelectorLeaf *disjunction(SelectorLeaf *right) = 0;
@@ -99,7 +99,7 @@ struct Nested {
 
   void addRule(const AstRule &rule) { rules_.push_back(rule); }
 
-  void addTo(bc::BuildContext &buildContext, bc::BuildContext &baseContext);
+  void addTo(BuildContext &buildContext, BuildContext &baseContext);
 
   bool resolveImports(ImportResolver &importResolver, Loader &loader,
       std::deque<std::string> inProgress) {

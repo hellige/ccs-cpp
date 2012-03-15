@@ -33,7 +33,7 @@ struct AstVisitor : public boost::static_visitor<void> {
 
 void Nested::addTo(BuildContext &buildContext, BuildContext &baseContext) {
   BuildContext *bc = &buildContext;
-  if (selector_ != NULL)
+  if (selector_)
     bc = selector_->traverse(buildContext, baseContext);
   for (auto it = rules_.begin(); it != rules_.end(); ++it)
     boost::apply_visitor(AstVisitor(*bc, baseContext), *it);

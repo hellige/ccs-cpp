@@ -113,8 +113,7 @@ struct ccs_grammar : qi::grammar<Iterator, ast::Nested(), qi::rule<Iterator>> {
         [_val = bind(&ast::SelectorLeaf::disjunction, _val, _1)]);
     step = singlestep(_a) [_val = bind(&ast::SelectorLeaf::step, _a)]
         | '(' >> sum [_val = _1] >> ')';
-    selector = (sum >> -lit('>'))
-        [_val = bind(&ast::SelectorBranch::conjunction, _1)];
+    selector = (sum >> -qi::string(">")) [_val = bind(branch, _1, _2)];
 
     // rules, rulesets...
     import %= lit("@import") >> strng;
@@ -130,6 +129,13 @@ struct ccs_grammar : qi::grammar<Iterator, ast::Nested(), qi::rule<Iterator>> {
         (lit(';') | skipper | &lit('}') | eoi);
     auto context = lit("@context") >> '(' >> selector >> ')' >> -lit(';');
     ruleset %= -context >> *rule >> eoi;
+  }
+
+  static ast::SelectorBranch *branch(ast::SelectorLeaf *leaf,
+      boost::optional<string> opt) {
+    return opt ?
+        ast::SelectorBranch::descendant(leaf)
+      : ast::SelectorBranch::conjunction(leaf);
   }
 
   bool parse(I &iter, I end, ast::Nested &ast) {

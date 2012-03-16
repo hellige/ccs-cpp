@@ -49,12 +49,11 @@ struct ImportVisitor : public boost::static_visitor<bool> {
       loader.logger().error(msg.str());
     } else {
       inProgress.push_back(import.location);
-      // TODO
-//      std::istream stream(resolver.resolve(import.location));
-      std::istream *stream;
-      Nested ast;
-      result = loader.parseCcsStream(*stream, import.location, resolver,
-          inProgress, ast);
+      result = resolver.resolve(import.location,
+          [this, &import](std::istream &stream) {
+        return this->loader.parseCcsStream(stream, import.location,
+            this->resolver, this->inProgress, import.ast);
+      });
       inProgress.pop_back();
     }
     return result;

@@ -20,8 +20,9 @@ struct StdErrLogger : public CcsLogger {
 StdErrLogger StdErrLogger;
 
 struct NoImportResolver : public ImportResolver {
-  virtual std::istream resolve(const std::string &location) {
-    // TODO
+  virtual bool resolve(const std::string &location,
+      std::function<bool(std::istream &)> load) {
+    return false;
   }
 };
 

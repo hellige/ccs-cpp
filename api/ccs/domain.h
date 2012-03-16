@@ -23,7 +23,8 @@ class ImportResolver {
 public:
   static ImportResolver &None;
   virtual ~ImportResolver() {}
-  virtual std::istream resolve(const std::string &location) = 0;
+  virtual bool resolve(const std::string &location,
+      std::function<bool(std::istream &)> load) = 0;
 };
 
 class CcsDomain {

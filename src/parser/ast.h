@@ -10,6 +10,7 @@
 
 #include "ccs/types.h"
 #include "dag/key.h"
+#include "dag/property.h"
 
 namespace ccs {
 
@@ -19,24 +20,6 @@ class Node;
 class BuildContext;
 
 namespace ast {
-
-struct Value {
-  std::string strVal_; // TODO generalize?
-
-  Value() {}
-  Value(const std::string &str) : strVal_(str) {}
-
-  Value &operator=(const Value &that) {
-    strVal_ = that.strVal_;
-    return *this;
-  }
-
-  template <typename T>
-  Value &operator=(const T &t) {
-    strVal_ = boost::lexical_cast<std::string>(t);
-    return *this;
-  }
-};
 
 struct PropDef {
   std::string name_;

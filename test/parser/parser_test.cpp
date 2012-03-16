@@ -9,10 +9,11 @@ using namespace ccs;
 
 struct P {
   Parser parser;
+  P() : parser(CcsLogger::StdErr) {}
   bool parse(const std::string &input) {
     std::istringstream str(input);
     ast::Nested ast;
-    return parser.parseCcsStream(str, ast);
+    return parser.parseCcsStream("<literal>", str, ast);
   }
 };
 

@@ -41,7 +41,7 @@ struct ccs_grammar : qi::grammar<Iterator, ast::Nested(), qi::rule<Iterator>> {
   qi::rule<I, string()> ident;
   qi::rule<I, string()> strng;
   qi::rule<I, void(ast::PropDef &)> modifiers;
-  qi::rule<I, ast::Value()> val;
+  qi::rule<I, Value()> val;
   qi::rule<I, ast::PropDef(), typeof(skipper)> property;
   qi::rule<I, std::shared_ptr<ast::SelectorBranch>(), typeof(skipper)> selector;
   qi::rule<I, void(Key &, const string &)> vals;
@@ -82,10 +82,15 @@ struct ccs_grammar : qi::grammar<Iterator, ast::Nested(), qi::rule<Iterator>> {
 
     strng = qi::lexeme['\'' >> *(char_ - ('\'' | eol)) >> '\'']
            | qi::lexeme['"' >> *(char_ - ('"' | eol)) >> '"'];
-    val %= lit("0x") >> qi::hex [_val = _1]
-        | qi::long_long [_val = _1] >> !lit('.')
-        | qi::double_ [_val = _1]
-        | strng;
+    val %= lit("0x") >> qi::hex [bind(&Value::setInt, _val, _1)]
+        | qi::long_long [bind(&Value::setInt, _val, _1)] >> !lit('.')
+        | qi::double_ [bind(&Value::setDouble, _val, _1)]
+        | qi::bool_ [bind(&Value::setBool, _val, _1)]
+        | strng [bind(&Value::setString, _val, _1)];
+//    val %= lit("0x") >> qi::hex
+//        | qi::long_long >> !lit('.')
+//        | qi::double_
+//        | strng;
     ident %= +char_("A-Za-z0-9$_") | strng;
 
     // properties...
@@ -145,20 +150,29 @@ struct ccs_grammar : qi::grammar<Iterator, ast::Nested(), qi::rule<Iterator>> {
 
 }
 
+struct Parser::Impl {
+  ccs_grammar<boost::spirit::istream_iterator> grammar;
+};
 
-bool Parser::parseCcsStream(std::istream &stream, ast::Nested &ast) {
+Parser::Parser(CcsLogger &log) : log(log), impl(new Impl()) {}
+Parser::~Parser() {}
+
+bool Parser::parseCcsStream(const std::string &fileName, std::istream &stream,
+    ast::Nested &ast) {
   stream.unsetf(std::ios::skipws);
 
   boost::spirit::istream_iterator iter(stream);
   boost::spirit::istream_iterator end;
 
-  ccs_grammar<typeof(iter)> grammar;
-  bool r = grammar.parse(iter, end, ast);
+  bool r = impl->grammar.parse(iter, end, ast);
 
   if (r && iter == end) return true;
 
-  string rest(iter, end);
-  cout << "Parsing failed, stopped at: \"" << rest << "\"\n";
+//  string rest(iter, end); TODO
+
+  std::ostringstream msg;
+  msg << "Errors parsing " << fileName + "!"; //":" + ErrorUtils.printParseErrors(result)); TODO
+  log.error(msg.str());
   return false;
 }
 

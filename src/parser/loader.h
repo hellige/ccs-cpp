@@ -25,25 +25,16 @@ public:
     if (parseCcsStream(stream, fileName, importResolver, inProgress, ast)) {
       // everything parsed, no errors. now it's safe to modify the dag...
       ast.addTo(dag.buildContext(), dag.buildContext());
-    } else {
-      // TODO how to report? already reported?
     }
+    // otherwise, errors already reported, don't modify the dag...
   }
 
   bool parseCcsStream(std::istream &stream, const std::string &fileName,
       ImportResolver &importResolver, std::vector<std::string> &inProgress,
       ast::Nested &ast) {
-    Parser parser;
-    bool result = parser.parseCcsStream(stream, ast);
-
-    if (!result) {
-      // TODO how to report? already reported?
-      //log.error("Errors parsing " + fileName + ":" + ErrorUtils.printParseErrors(result));
-      return false;
-    }
-
+    Parser parser(log);
+    if (!parser.parseCcsStream(fileName, stream, ast)) return false;
     if (!ast.resolveImports(importResolver, *this, inProgress)) return false;
-
     return true;
   }
 };

@@ -11,8 +11,14 @@ namespace ccs {
 
 struct MissingProp : public CcsProperty {
   virtual bool exists() const { return false; }
-  virtual const std::string &value() const
-    { throw std::runtime_error("called value() on MissingProp"); }
+  virtual const std::string &strValue() const
+    { throw std::runtime_error("called strValue() on MissingProp"); }
+  virtual int intValue() const
+    { throw std::runtime_error("called intValue() on MissingProp"); }
+  virtual double doubleValue() const
+    { throw std::runtime_error("called doubleValue() on MissingProp"); }
+  virtual bool boolValue() const
+    { throw std::runtime_error("called boolValue() on MissingProp"); }
 };
 
 namespace { MissingProp Missing; }
@@ -31,7 +37,7 @@ CcsContext::CcsContext(const CcsContext &parent, const std::string &name,
     searchState(SearchState::newChild(parent.searchState,
         Key(name, values))) {}
 
-CcsContext::Builder CcsContext::builder() { return Builder(*this); }
+CcsContext::Builder CcsContext::builder() const { return Builder(*this); }
 
 const CcsProperty &CcsContext::findProperty(const std::string &propertyName,
     bool locals) const {
@@ -42,12 +48,89 @@ const CcsProperty &CcsContext::findProperty(const std::string &propertyName,
   return Missing;
 }
 
-const std::string &CcsContext::getString(const std::string &propertyName) const {
+const std::string &CcsContext::getString(const std::string &propertyName)
+    const {
   const CcsProperty &prop(getProperty(propertyName));
   if (!prop.exists()) throw no_such_property(propertyName, *this);
-  return prop.value();
+  return prop.strValue();
 }
 
+const std::string &CcsContext::getString(const std::string &propertyName,
+    const std::string &defaultVal) const {
+  const CcsProperty &prop(getProperty(propertyName));
+  if (!prop.exists()) return defaultVal;
+  return prop.strValue();
+}
+
+bool CcsContext::getInto(std::string &dest, const std::string &propertyName)
+    const {
+  const CcsProperty &prop(getProperty(propertyName));
+  if (!prop.exists()) return false;
+  dest = prop.strValue();
+  return true;
+}
+
+int CcsContext::getInt(const std::string &propertyName) const {
+  const CcsProperty &prop(getProperty(propertyName));
+  if (!prop.exists()) throw no_such_property(propertyName, *this);
+  return prop.intValue();
+}
+
+int CcsContext::getInt(const std::string &propertyName, int defaultVal) const {
+  const CcsProperty &prop(getProperty(propertyName));
+  if (!prop.exists()) return defaultVal;
+  return prop.intValue();
+}
+
+bool CcsContext::getInto(int &dest, const std::string &propertyName)
+    const {
+  const CcsProperty &prop(getProperty(propertyName));
+  if (!prop.exists()) return false;
+  dest = prop.intValue();
+  return true;
+}
+
+double CcsContext::getDouble(const std::string &propertyName) const {
+  const CcsProperty &prop(getProperty(propertyName));
+  if (!prop.exists()) throw no_such_property(propertyName, *this);
+  return prop.doubleValue();
+}
+
+double CcsContext::getDouble(const std::string &propertyName,
+    double defaultVal) const {
+  const CcsProperty &prop(getProperty(propertyName));
+  if (!prop.exists()) return defaultVal;
+  return prop.doubleValue();
+}
+
+bool CcsContext::getInto(double &dest, const std::string &propertyName)
+    const {
+  const CcsProperty &prop(getProperty(propertyName));
+  if (!prop.exists()) return false;
+  dest = prop.doubleValue();
+  return true;
+}
+
+bool CcsContext::getBool(const std::string &propertyName) const {
+  const CcsProperty &prop(getProperty(propertyName));
+  if (!prop.exists()) throw no_such_property(propertyName, *this);
+  return prop.boolValue();
+}
+
+bool CcsContext::getBool(const std::string &propertyName, bool defaultVal)
+    const {
+  const CcsProperty &prop(getProperty(propertyName));
+  if (!prop.exists()) return defaultVal;
+  return prop.boolValue();
+}
+
+bool CcsContext::getInto(bool &dest, const std::string &propertyName)
+    const {
+  const CcsProperty &prop(getProperty(propertyName));
+  if (!prop.exists()) return false;
+  dest = prop.boolValue();
+  return true;
+}
 
 struct CcsContext::Builder::Impl {
   CcsContext context;
@@ -64,10 +147,12 @@ CcsContext::Builder &CcsContext::Builder::operator=(
   impl.reset(new Impl(*that.impl));
   return *this;
 }
+
 CcsContext::Builder::~Builder() {}
 
-CcsContext CcsContext::Builder::build()
+CcsContext CcsContext::Builder::build() const
   { return CcsContext(impl->context, impl->key); }
+
 CcsContext::Builder &CcsContext::Builder::add(const std::string &name,
     const std::vector<std::string> &values) {
   impl->key.addName(name);
@@ -75,6 +160,5 @@ CcsContext::Builder &CcsContext::Builder::add(const std::string &name,
     impl->key.addValue(name, *it);
   return *this;
 }
-
 
 }

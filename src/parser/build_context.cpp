@@ -73,7 +73,9 @@ BuildContext::P BuildContext::disjunction(Node &node,
       baseContext); }
 
 void BuildContext::addProperty(const ast::PropDef &propDef) {
-  node().addProperty(propDef.name_, Property(propDef.value_.strVal_,
+  Value value(propDef.value_);
+  value.setName(propDef.name_);
+  node().addProperty(propDef.name_, Property(value,
       propDef.origin_, dag_.nextProperty(), propDef.override_), propDef.local_);
 }
 

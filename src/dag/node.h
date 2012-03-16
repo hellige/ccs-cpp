@@ -9,26 +9,10 @@
 #include "search_state.h"
 #include "ccs/types.h"
 #include "dag/key.h"
+#include "dag/property.h"
 #include "dag/tally.h"
 
 namespace ccs {
-
-struct Property : public CcsProperty {
-  std::string value_;
-  Origin origin;
-  unsigned propertyNumber;
-  bool override_;
-
-public:
-  Property(const std::string &value, const Origin &origin,
-      unsigned propertyNumber, bool override) :
-        value_(value), origin(origin), propertyNumber(propertyNumber),
-        override_(override) {}
-
-  virtual bool exists() const { return true; }
-  virtual const std::string &value() const { return value_; }
-  bool override() const { return override_; }
-};
 
 class Node {
   std::map<Key, std::shared_ptr<Node>> children;

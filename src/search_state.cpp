@@ -1,6 +1,7 @@
 #include "search_state.h"
 
 #include <algorithm>
+#include <sstream>
 
 #include "ccs/domain.h"
 #include "dag/key.h"
@@ -83,10 +84,12 @@ const CcsProperty *SearchState::doSearch(const std::string &propertyName,
           [](const Property *l, const Property *r) {
         return l->propertyNumber < r->propertyNumber;
       });
-      log.warn("Conflict detected for property: " + propertyName
+      std::ostringstream msg;
+      msg << "Conflict detected for property: " << propertyName
          // + " in context [" + ccsContext.toString() + "]. " TODO log
          // + "Conflicting settings at: [" + origins(values) + "]"
-          + ". Using most recent value.");
+          << ". Using most recent value.";
+      log.warn(msg.str());
       return values.back();
     }
   }

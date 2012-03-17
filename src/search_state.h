@@ -25,7 +25,9 @@ class SearchState {
   std::shared_ptr<const Node> root;
   std::shared_ptr<SearchState> parent;
   std::map<Specificity, std::set<const Node *>> nodes;
-  std::map<const AndTally *, std::unique_ptr<const TallyState>> tallyMap;
+  // the TallyStates here should rightly be unique_ptrs, but gcc 4.5 can't
+  // support that in a map. bummer.
+  std::map<const AndTally *, const TallyState *> tallyMap;
   CcsLogger &log;
   Key key;
   bool constraintsChanged;

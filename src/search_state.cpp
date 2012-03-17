@@ -25,7 +25,10 @@ SearchState::SearchState(std::shared_ptr<const Node> &root,
   nodes[Specificity()] = s;
 }
 
-SearchState::~SearchState() {}
+SearchState::~SearchState() {
+  for (auto it = tallyMap.begin(); it != tallyMap.end(); ++it)
+    delete it->second;
+}
 
 std::shared_ptr<SearchState> SearchState::newChild(
     const std::shared_ptr<SearchState> &parent, const Key &key) {
@@ -98,14 +101,16 @@ const CcsProperty *SearchState::doSearch(const std::string &propertyName,
 
 const TallyState *SearchState::getTallyState(const AndTally *tally) {
   auto it = tallyMap.find(tally);
-  if (it != tallyMap.end()) return it->second.get();
+  if (it != tallyMap.end()) return it->second;
   if (parent) return parent->getTallyState(tally);
-  return tally->emptyState();;
+  return tally->emptyState();
 }
 
 void SearchState::setTallyState(const AndTally *tally,
     const TallyState *state) {
-  tallyMap[tally].reset(state);
+  const TallyState *&loc = tallyMap[tally];
+  if (loc) delete loc;
+  loc = state;
 }
 
 }

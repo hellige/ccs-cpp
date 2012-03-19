@@ -24,7 +24,7 @@ namespace ast {
 struct PropDef {
   std::string name_;
   Value value_;
-  Origin origin_; // TODO track!
+  Origin origin_;
   bool local_;
   bool override_;
 

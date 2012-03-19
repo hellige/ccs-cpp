@@ -55,6 +55,7 @@ struct grammar : qi::grammar<Iterator, std::vector<CcsTestCase>()> {
   qi::rule<I, CcsTestCase()> testcase;
   qi::rule<I, string()> line, block, strng, ident;
   qi::rule<I, Assertion::NameVals()> namevals;
+  qi::rule<I, std::vector<Assertion::NameVals>()> constraints;
   qi::rule<I, Assertion()> assertion;
 
   grammar() : grammar::base_type(testcases) {
@@ -65,7 +66,7 @@ struct grammar : qi::grammar<Iterator, std::vector<CcsTestCase>()> {
     line %= *(qi::print - qi::eol) >> qi::eol;
     block %= *(qi::char_ - sep);
     namevals = ident >> *("." >> ident);
-    auto constraints = namevals >> *("/" >> namevals);
+    constraints = namevals >> *("/" >> namevals);
     assertion %= -(constraints % +qi::space >> ": ") >> ident >> " = " >> ident
         >> qi::eol;
     testcase = line >> sep >> block >> sep >> +assertion >> "===" >> +qi::eol;

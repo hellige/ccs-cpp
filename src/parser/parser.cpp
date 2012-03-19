@@ -6,6 +6,7 @@
 
 #include <boost/fusion/include/adapt_struct.hpp>
 #include <boost/spirit/include/qi.hpp>
+#include <boost/spirit/include/classic_position_iterator.hpp>
 #include <boost/spirit/include/phoenix.hpp>
 #include <boost/spirit/include/support_istream_iterator.hpp>
 #include <boost/tuple/tuple.hpp>
@@ -14,6 +15,7 @@ using std::cout;
 using std::string;
 namespace qi = boost::spirit::qi;
 namespace phoenix = boost::phoenix;
+namespace classic = boost::spirit::classic;
 
 BOOST_FUSION_ADAPT_STRUCT(
     ccs::ast::Import,
@@ -87,10 +89,6 @@ struct ccs_grammar : qi::grammar<Iterator, ast::Nested(), qi::rule<Iterator>> {
         | qi::double_ [bind(&Value::setDouble, _val, _1)]
         | qi::bool_ [bind(&Value::setBool, _val, _1)]
         | strng [bind(&Value::setString, _val, _1)];
-//    val %= lit("0x") >> qi::hex
-//        | qi::long_long >> !lit('.')
-//        | qi::double_
-//        | strng;
     ident %= +char_("A-Za-z0-9$_") | strng;
 
     // properties...
@@ -101,12 +99,12 @@ struct ccs_grammar : qi::grammar<Iterator, ast::Nested(), qi::rule<Iterator>> {
             [bind(&ast::PropDef::local_, _r1) = true ] >> skipper));
     property = modifiers(_val)
         >> ident [bind(&ast::PropDef::name_, _val) = _1]
-        >> '=' >> val [bind(&ast::PropDef::value_, _val) = _1];
+        >> '=' > val [bind(&ast::PropDef::value_, _val) = _1];
 
     // selectors...
-    vals = lit('.') >> ident[bind(&Key::addValue, _r1, _r2, _1)]
+    vals = lit('.') > ident[bind(&Key::addValue, _r1, _r2, _1)]
                              >> -vals(_r1, _r2);
-    stepsuffix = lit('/') >> singlestep(_r1);
+    stepsuffix = lit('/') > singlestep(_r1);
     singlestep = ident [bind(&Key::addName, _r1, _1), _a = _1]
                         >> -vals(_r1, _a) >> -stepsuffix(_r1);
 
@@ -117,23 +115,23 @@ struct ccs_grammar : qi::grammar<Iterator, ast::Nested(), qi::rule<Iterator>> {
     sum = product [_val = _1] >> *(',' >> product
         [_val = bind(&ast::SelectorLeaf::disjunction, _val, _1)]);
     step = singlestep(_a) [_val = bind(&ast::SelectorLeaf::step, _a)]
-        | '(' >> sum [_val = _1] >> ')';
+        | ('(' > sum [_val = _1] >> ')');
     selector = (sum >> -qi::string(">")) [_val = bind(branch, _1, _2)];
 
     // rules, rulesets...
-    import %= lit("@import") >> strng;
+    import %= lit("@import") > strng;
     constraint %= lit("@constrain")
-        >> singlestep(bind(&ast::Constraint::key_, _val));
+        > singlestep(bind(&ast::Constraint::key_, _val));
     nested = selector [bind(&ast::Nested::selector_, _val) = _1] >>
-        (':' >> (import | constraint | property)
-            [bind(&ast::Nested::addRule, _val, _1)]
-        | ('{' >> *rule >> '}')
+        ((':' > (import | constraint | property)
+            [bind(&ast::Nested::addRule, _val, _1)])
+        | ('{' > *rule > '}')
             [bind(&ast::Nested::rules_, _val) = _1]);
     rulebody = import | constraint | property | nested;
     rule = qi::skip(skipper.alias())[rulebody] >>
         (lit(';') | skipper | &lit('}') | eoi);
-    auto context = lit("@context") >> '(' >> selector >> ')' >> -lit(';');
-    ruleset %= -context >> *rule >> eoi;
+    auto context = lit("@context") > '(' > selector > ')' > -lit(';');
+    ruleset %= -context > *rule > eoi;
   }
 
   static std::shared_ptr<ast::SelectorBranch> branch(ast::SelectorLeaf *leaf,
@@ -151,7 +149,9 @@ struct ccs_grammar : qi::grammar<Iterator, ast::Nested(), qi::rule<Iterator>> {
 }
 
 struct Parser::Impl {
-  ccs_grammar<boost::spirit::istream_iterator> grammar;
+  typedef boost::spirit::istream_iterator fwd_iterator_type;
+  typedef classic::position_iterator2<fwd_iterator_type> pos_iterator_type;
+  ccs_grammar<pos_iterator_type> grammar;
 };
 
 Parser::Parser(CcsLogger &log) : log(log), impl(new Impl()) {}
@@ -161,18 +161,28 @@ bool Parser::parseCcsStream(const std::string &fileName, std::istream &stream,
     ast::Nested &ast) {
   stream.unsetf(std::ios::skipws);
 
-  boost::spirit::istream_iterator iter(stream);
-  boost::spirit::istream_iterator end;
+  Impl::fwd_iterator_type fwd_begin(stream);
+  Impl::fwd_iterator_type fwd_end;
 
-  bool r = impl->grammar.parse(iter, end, ast);
+  // wrap forward iterator with position iterator, to record the position
+  Impl::pos_iterator_type iter(fwd_begin, fwd_end, fileName);
+  Impl::pos_iterator_type end;
 
-  if (r && iter == end) return true;
+  try {
+    if (impl->grammar.parse(iter, end, ast))
+      return true;
+    std::ostringstream msg;
+    msg << "Unknown error parsing " << fileName + "!";
+    log.error(msg.str());
+  } catch (const qi::expectation_failure<Impl::pos_iterator_type>& e) {
+    const classic::file_position_base<std::string> &pos =
+        e.first.get_position();
+    std::ostringstream msg;
+    msg << "Parse error at file " << pos.file << ':' << pos.line << ':'
+      << pos.column << ": '" << e.first.get_currentline() << "'";
+    log.error(msg.str());
+  }
 
-//  string rest(iter, end);
-
-  std::ostringstream msg;
-  msg << "Errors parsing " << fileName + "!"; //":" + ErrorUtils.printParseErrors(result)); TODO
-  log.error(msg.str());
   return false;
 }
 

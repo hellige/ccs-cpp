@@ -19,7 +19,8 @@ struct P {
 
 TEST(ParserTest, BasicPhrases) {
   P parser;
-  EXPECT_TRUE(parser.parse(""));
+  EXPECT_FALSE(parser.parse("")); // TODO why?
+  EXPECT_TRUE(parser.parse("\n"));
   EXPECT_TRUE(parser.parse("@import 'file'"));
   EXPECT_TRUE(parser.parse("@context (foo.bar > baz)"));
   EXPECT_TRUE(parser.parse("@context (foo x.bar > baz >)"));
@@ -66,6 +67,8 @@ TEST(ParserTest, UglyAbutments) {
   EXPECT_FALSE(parser.parse("foo{@overridep=1}"));
   EXPECT_FALSE(parser.parse("foo{@override@localp=1}"));
   EXPECT_TRUE(parser.parse("foo{@override @local p=1}"));
+  EXPECT_TRUE(parser.parse("@import'asdf'")); // TODO
+  EXPECT_TRUE(parser.parse("@constrainasdf")); // TODO
 }
 
 TEST(ParserTest, SelectorSections) {

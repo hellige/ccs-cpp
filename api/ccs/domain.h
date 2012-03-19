@@ -33,7 +33,7 @@ class CcsDomain {
 
 public:
   CcsDomain();
-  CcsDomain(CcsLogger &log);
+  explicit CcsDomain(CcsLogger &log);
   ~CcsDomain();
   CcsDomain(const CcsDomain &) = delete;
   CcsDomain &operator=(const CcsDomain &) = delete;

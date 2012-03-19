@@ -3,6 +3,7 @@
 
 #include <map>
 #include <memory>
+#include <ostream>
 #include <set>
 
 #include "dag/key.h"
@@ -23,7 +24,7 @@ class SearchState {
   // to the root in the root search state. the parent links are shared, so
   // this is sufficient.
   std::shared_ptr<const Node> root;
-  std::shared_ptr<SearchState> parent;
+  std::shared_ptr<const SearchState> parent;
   std::map<Specificity, std::set<const Node *>> nodes;
   // the TallyStates here should rightly be unique_ptrs, but gcc 4.5 can't
   // support that in a map. bummer.
@@ -32,26 +33,23 @@ class SearchState {
   Key key;
   bool constraintsChanged;
 
-  SearchState(const std::shared_ptr<SearchState> &parent,
+  SearchState(const std::shared_ptr<const SearchState> &parent,
       const Key &key, CcsLogger &log);
 
 public:
   SearchState(std::shared_ptr<const Node> &root,
-      const std::shared_ptr<SearchState> &parent,
+      const std::shared_ptr<const SearchState> &parent,
       CcsLogger &log);
   SearchState(const SearchState &) = delete;
   SearchState &operator=(const SearchState &) = delete;
   ~SearchState();
 
   static std::shared_ptr<SearchState> newChild(
-      const std::shared_ptr<SearchState> &parent, const Key &key);
+      const std::shared_ptr<const SearchState> &parent, const Key &key);
 
   bool extendWith(const SearchState &priorState);
 
-  const CcsProperty *findProperty(const std::string &propertyName, bool locals,
-      bool override);
-  const CcsProperty *doSearch(const std::string &propertyName, bool locals,
-      bool override);
+  const CcsProperty *findProperty(const std::string &propertyName) const;
 
   void add(Specificity spec, Node *node)
     { nodes[spec].insert(node); }
@@ -60,8 +58,16 @@ public:
     constraintsChanged |= key.addAll(constraints);
   }
 
-  const TallyState *getTallyState(const AndTally *tally);
+  const TallyState *getTallyState(const AndTally *tally) const;
   void setTallyState(const AndTally *tally, const TallyState *state);
+
+private:
+  const CcsProperty *findProperty(const std::string &propertyName, bool locals,
+      bool override) const;
+  const CcsProperty *doSearch(const std::string &propertyName, bool locals,
+      bool override) const;
+
+  friend std::ostream &operator<<(std::ostream &, const SearchState &);
 };
 
 }

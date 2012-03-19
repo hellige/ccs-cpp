@@ -16,10 +16,6 @@ struct Value {
   std::string name_;
 
   Value() : val_(false) {}
-  Value(const std::string &val) : val_(val) { str(); }
-  Value(int64_t val) : val_(val) { str(); }
-  Value(bool val) : val_(val) { str(); }
-  Value(double val) : val_(val) { str(); }
   void setString(const std::string &val) { val_ = val; str(); }
   void setInt(int64_t val) { val_ = val; str(); }
   void setBool(bool val) { val_ = val; str(); }
@@ -33,24 +29,26 @@ struct Value {
   void str();
 };
 
-struct Property : public CcsProperty {
+class Property : public CcsProperty {
   const Value value_;
-  Origin origin;
-  unsigned propertyNumber;
+  Origin origin_;
+  unsigned propertyNumber_;
   bool override_;
 
 public:
   Property(const Value &value, const Origin &origin,
       unsigned propertyNumber, bool override) :
-        value_(value), origin(origin), propertyNumber(propertyNumber),
+        value_(value), origin_(origin), propertyNumber_(propertyNumber),
         override_(override) {}
 
   virtual bool exists() const { return true; }
+  virtual Origin origin() const { return origin_; }
   virtual const std::string &strValue() const { return value_.asString(); }
   virtual int intValue() const { return value_.asInt(); }
   virtual double doubleValue() const { return value_.asDouble(); }
   virtual bool boolValue() const { return value_.asBool(); }
   bool override() const { return override_; }
+  unsigned propertyNumber() const { return propertyNumber_; }
 };
 
 }

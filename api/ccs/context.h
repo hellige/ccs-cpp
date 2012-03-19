@@ -43,8 +43,7 @@ public:
       const std::vector<std::string> &values) const
     { return CcsContext(*this, name, values); }
 
-  const CcsProperty &getProperty(const std::string &propertyName) const
-    { return findProperty(propertyName, true); }
+  const CcsProperty &getProperty(const std::string &propertyName) const;
 
   const std::string &getString(const std::string &propertyName) const;
   const std::string &getString(const std::string &propertyName,
@@ -71,9 +70,7 @@ public:
   template <typename T>
   bool getInto(T &dest, const std::string &propertyName) const;
 
-private:
-  const CcsProperty &findProperty(const std::string &propertyName,
-      bool locals) const;
+  friend std::ostream &operator<<(std::ostream &, const CcsContext);
 };
 
 template <typename T>
@@ -109,7 +106,7 @@ class CcsContext::Builder {
   std::unique_ptr<Impl> impl;
 
 public:
-  Builder(const CcsContext &context);
+  explicit Builder(const CcsContext &context);
   Builder(const Builder &);
   Builder &operator=(const Builder &);
   ~Builder();
@@ -122,7 +119,7 @@ public:
       const std::vector<std::string> &values);
 };
 
-struct no_such_property : public std::exception {
+struct no_such_property : public virtual std::exception {
   std::string msg;
   CcsContext context;
   no_such_property(const std::string &name, CcsContext context) :
@@ -132,7 +129,7 @@ struct no_such_property : public std::exception {
     { return msg.c_str(); }
 };
 
-struct wrong_type : public std::exception {
+struct wrong_type : public virtual std::exception {
   std::string msg;
   wrong_type(const std::string &name) :
     msg("property has wrong type: " + name) {}

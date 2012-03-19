@@ -11,6 +11,8 @@ namespace ccs {
 
 struct MissingProp : public CcsProperty {
   virtual bool exists() const { return false; }
+  virtual Origin origin() const
+    { throw std::runtime_error("called origin() on MissingProp"); }
   virtual const std::string &strValue() const
     { throw std::runtime_error("called strValue() on MissingProp"); }
   virtual int intValue() const
@@ -39,11 +41,9 @@ CcsContext::CcsContext(const CcsContext &parent, const std::string &name,
 
 CcsContext::Builder CcsContext::builder() const { return Builder(*this); }
 
-const CcsProperty &CcsContext::findProperty(const std::string &propertyName,
-    bool locals) const {
-  const CcsProperty *prop = searchState->findProperty(propertyName, locals,
-      true);
-  if (!prop) prop = searchState->findProperty(propertyName, locals, false);
+const CcsProperty &CcsContext::getProperty(const std::string &propertyName)
+    const {
+  const CcsProperty *prop = searchState->findProperty(propertyName);
   if (prop) return *prop;
   return Missing;
 }
@@ -131,6 +131,11 @@ bool CcsContext::getInto(bool &dest, const std::string &propertyName)
   dest = prop.boolValue();
   return true;
 }
+
+std::ostream &operator<<(std::ostream &str, const CcsContext ctx) {
+  return str << *ctx.searchState;
+}
+
 
 struct CcsContext::Builder::Impl {
   CcsContext context;

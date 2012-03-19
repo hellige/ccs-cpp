@@ -168,7 +168,7 @@ bool Parser::parseCcsStream(const std::string &fileName, std::istream &stream,
 
   if (r && iter == end) return true;
 
-//  string rest(iter, end); TODO
+//  string rest(iter, end);
 
   std::ostringstream msg;
   msg << "Errors parsing " << fileName + "!"; //":" + ErrorUtils.printParseErrors(result)); TODO

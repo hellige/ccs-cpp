@@ -3,6 +3,7 @@
 
 #include <algorithm>
 #include <map>
+#include <ostream>
 #include <set>
 #include <string>
 #include <vector>
@@ -78,7 +79,11 @@ public:
     }
     return true;
   }
+
+  friend std::ostream &operator<<(std::ostream &, const Key &);
 };
+
+std::ostream &operator<<(std::ostream &out, const Key &key);
 
 }
 

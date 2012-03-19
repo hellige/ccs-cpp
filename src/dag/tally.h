@@ -26,7 +26,7 @@ class TallyState {
   Specificity specificity() const { return firstMatch + secondMatch; }
 
 public:
-  TallyState(const AndTally &tally) :
+  explicit TallyState(const AndTally &tally) :
     tally(tally), firstMatched(false), secondMatched(false) {}
   TallyState(const TallyState &) = delete;
   TallyState &operator=(const TallyState &) = delete;

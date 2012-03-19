@@ -101,3 +101,12 @@ TEST(CcsTest, TemplateGetters) {
   ASSERT_TRUE(ctx.getInto(foo, "b"));
   EXPECT_EQ(16, foo.x);
 }
+
+TEST(CcsTest, SameStep) {
+  CcsDomain ccs;
+  std::istringstream input("a.b.c d.e: test = 'nope'; a.b.c/d.e: test = 'yep'");
+  ccs.loadCcsStream(input, "<literal>", ImportResolver::None);
+  CcsContext ctx = ccs.build();
+  ctx = ctx.builder().add("a", {"b", "c"}).add("d", {"e"}).build();
+  EXPECT_EQ("yep", ctx.getString("test"));
+}

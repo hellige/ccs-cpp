@@ -100,6 +100,7 @@ struct ccs_grammar : qi::grammar<Iterator, ast::Nested(), qi::rule<Iterator>> {
     property = modifiers(_val)
         >> ident [bind(&ast::PropDef::name_, _val) = _1]
         >> '=' > val [bind(&ast::PropDef::value_, _val) = _1];
+    qi::on_success(property, bind(setOrigin, _val, _1));
 
     // selectors...
     vals = lit('.') > ident[bind(&Key::addValue, _r1, _r2, _1)]
@@ -132,6 +133,12 @@ struct ccs_grammar : qi::grammar<Iterator, ast::Nested(), qi::rule<Iterator>> {
         (lit(';') | skipper | &lit('}') | eoi);
     auto context = lit("@context") > '(' > selector > ')' > -lit(';');
     ruleset %= -context > *rule > eoi;
+  }
+
+  static void setOrigin(ast::PropDef &propDef, Iterator it) {
+    const classic::file_position_base<std::string> &pos =
+        it.get_position();
+    propDef.origin_ = Origin(pos.file, pos.line);
   }
 
   static std::shared_ptr<ast::SelectorBranch> branch(ast::SelectorLeaf *leaf,

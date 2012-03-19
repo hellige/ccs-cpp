@@ -10,7 +10,7 @@ config default
 end
 
 config build
-  include boost/1.44.0.redhat5
+  include boost/1.47.0.ubuntu
 end
 
 config test

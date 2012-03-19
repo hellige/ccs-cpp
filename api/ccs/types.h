@@ -11,6 +11,8 @@ struct Origin {
   unsigned line;
 
   Origin() : fileName("<unknown>"), line(0) {}
+  Origin(const std::string &fileName, unsigned line) :
+    fileName(fileName), line(line) {}
 };
 
 static inline std::ostream &operator<<(std::ostream &str, const Origin &origin) {

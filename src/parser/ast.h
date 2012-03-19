@@ -29,6 +29,8 @@ struct PropDef {
   bool override_;
 
   PropDef() : local_(false), override_(false) {}
+
+  void setOrigin() { origin_.fileName = "OK!"; }
 };
 
 

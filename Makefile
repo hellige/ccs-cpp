@@ -100,13 +100,13 @@ $(CP_INCLUDE): $(shell find $(API_DIR) -name '*.h')
 	$(CP) $(API_DIR)/* $(INCLUDE_OUT)
 	touch $(CP_INCLUDE)
 
-$(API_HC):out/api/%.hc: $(API_DIR)/%.h $(FIG_DEP)
+$(API_HC):out/api/%.hc: $(API_DIR)/%.h $(FIG_MAIN)
 	@mkdir -p $(dir $@)
 	@echo "Checking self-contained: $<"
 	@$(CXX) $(CFLAGS) -o /dev/null -c -w $<
 	@touch $@
 
-$(MAIN_HC):out/main/%.hc: $(MAIN_DIR)/%.h $(FIG_DEP)
+$(MAIN_HC):out/main/%.hc: $(MAIN_DIR)/%.h $(FIG_MAIN)
 	@mkdir -p $(dir $@)
 	@echo "Checking self-contained: $<"
 	@$(CXX) $(CFLAGS) -o /dev/null -c -w $<

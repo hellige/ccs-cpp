@@ -29,8 +29,6 @@ struct PropDef {
   bool override_;
 
   PropDef() : local_(false), override_(false) {}
-
-  void setOrigin() { origin_.fileName = "OK!"; }
 };
 
 
@@ -48,19 +46,6 @@ typedef boost::variant<
     boost::recursive_wrapper<Nested>>
   AstRule;
 
-struct SelectorLeaf;
-
-struct SelectorBranch {
-  typedef std::shared_ptr<SelectorBranch> P;
-  virtual ~SelectorBranch() {}
-  virtual std::shared_ptr<BuildContext> traverse(
-      std::shared_ptr<BuildContext> context,
-      std::shared_ptr<BuildContext> baseContext) = 0;
-
-  static P descendant(std::shared_ptr<SelectorLeaf> first);
-  static P conjunction(std::shared_ptr<SelectorLeaf> first);
-  static P disjunction(std::shared_ptr<SelectorLeaf> first);
-};
 
 struct SelectorLeaf {
   typedef std::shared_ptr<SelectorLeaf> P;
@@ -80,6 +65,19 @@ private:
   virtual P conjunction(P left, P right) = 0;
   virtual P disjunction(P left, P right) = 0;
 };
+
+struct SelectorBranch {
+  typedef std::shared_ptr<SelectorBranch> P;
+  virtual ~SelectorBranch() {}
+  virtual std::shared_ptr<BuildContext> traverse(
+      std::shared_ptr<BuildContext> context,
+      std::shared_ptr<BuildContext> baseContext) = 0;
+
+  static P descendant(SelectorLeaf::P first);
+  static P conjunction(SelectorLeaf::P first);
+  static P disjunction(SelectorLeaf::P first);
+};
+
 
 struct Nested {
   std::shared_ptr<SelectorBranch> selector_;

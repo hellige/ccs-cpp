@@ -6,12 +6,21 @@
 
 using namespace ccs;
 
+namespace {
+
+std::vector<std::string> v(const std::string &s) {
+  return std::vector<std::string>{s};
+}
+
+}
+
+
 TEST(CcsTest, Load) {
   CcsDomain ccs;
   std::istringstream input("foo.bar > baz.quux: frob = 'nitz'");
   ccs.loadCcsStream(input, "<literal>", ImportResolver::None);
   CcsContext root = ccs.build();
-  CcsContext ctx = root.constrain("foo", {"bar"}).constrain("baz", {"quux"});
+  CcsContext ctx = root.constrain("foo", v("bar")).constrain("baz", v("quux"));
   ASSERT_NO_THROW(EXPECT_EQ("nitz", ctx.getString("frob")));
 }
 
@@ -21,7 +30,7 @@ TEST(CcsTest, Memory) {
   ccs->loadCcsStream(input, "<literal>", ImportResolver::None);
   CcsContext root = ccs->build();
   delete ccs;
-  CcsContext ctx = root.constrain("foo", {"bar"}).constrain("baz", {"quux"});
+  CcsContext ctx = root.constrain("foo", v("bar")).constrain("baz", v("quux"));
   ASSERT_NO_THROW(EXPECT_EQ("nitz", ctx.getString("frob")));
 }
 
@@ -42,7 +51,7 @@ TEST(CcsTest, Import) {
   std::istringstream input("@import 'foo'");
   StringImportResolver ir("baz.bar: frob = 'nitz'");
   ccs.loadCcsStream(input, "<literal>", ir);
-  CcsContext ctx = ccs.build().constrain("baz", {"bar"});
+  CcsContext ctx = ccs.build().constrain("baz", v("bar"));
   ASSERT_NO_THROW(EXPECT_EQ("nitz", ctx.getString("frob")));
 }
 
@@ -107,6 +116,9 @@ TEST(CcsTest, SameStep) {
   std::istringstream input("a.b.c d.e: test = 'nope'; a.b.c/d.e: test = 'yep'");
   ccs.loadCcsStream(input, "<literal>", ImportResolver::None);
   CcsContext ctx = ccs.build();
-  ctx = ctx.builder().add("a", {"b", "c"}).add("d", {"e"}).build();
+  ctx = ctx.builder()
+      .add("a", std::vector<std::string>{"b", "c"})
+      .add("d", std::vector<std::string>{"e"})
+      .build();
   EXPECT_EQ("yep", ctx.getString("test"));
 }

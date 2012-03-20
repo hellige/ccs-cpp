@@ -79,35 +79,35 @@ bool Nested::resolveImports(ImportResolver &importResolver, Loader &loader,
 
 
 struct Wrap : public SelectorLeaf {
-  std::vector<SelectorBranch *> branches;
-  SelectorLeaf *right;
+  std::vector<SelectorBranch::P> branches;
+  SelectorLeaf::P right;
 
-  virtual ~Wrap() {
-    for (auto it = branches.begin(); it != branches.end(); ++it) delete *it;
-    delete right;
-  }
-
-  Wrap(SelectorBranch *branch, SelectorLeaf *leaf) : right(leaf)
+  Wrap(SelectorBranch::P branch, SelectorLeaf::P leaf) : right(leaf)
     { branches.push_back(branch); }
 
-  virtual SelectorLeaf *descendant(SelectorLeaf *right)
-    { return push(SelectorBranch::descendant(this->right), right); }
-  virtual SelectorLeaf *conjunction(SelectorLeaf *right)
-    { return push(SelectorBranch::conjunction(this->right), right); }
-  virtual SelectorLeaf *disjunction(SelectorLeaf *right)
-    { return push(SelectorBranch::disjunction(this->right), right); }
+  // left == this, always. guess we could just use enable_shared_from_this,
+  // but that's just as ugly... spirit just doesn't like this way of doing
+  // things... it works fine, though, and i don't want to invest a lot of 
+  // time in switching to some kind of value-types-in-a-variant design just
+  // to play nicer with spirit. it's also worth something to stay roughly
+  // in sync with the java version. anyway, maybe reconsider down the road.
+  virtual P descendant(P left, P right)
+    { push(SelectorBranch::descendant(this->right), right); return left; }
+  virtual P conjunction(P left, P right)
+    { push(SelectorBranch::conjunction(this->right), right); return left; }
+  virtual P disjunction(P left, P right)
+    { push(SelectorBranch::disjunction(this->right), right); return left; }
 
-  SelectorLeaf *push(SelectorBranch *newBranch, SelectorLeaf *newRight) {
+  void push(SelectorBranch::P newBranch, SelectorLeaf::P newRight) {
     branches.push_back(newBranch);
     right = newRight;
-    return this;
   }
 
   virtual Node &traverse(BuildContext::P context) {
     BuildContext::P tmp = context;
     for (auto it = branches.begin(); it != branches.end(); ++it)
       tmp = (*it)->traverse(tmp, context);
-    return tmp->traverse(right);
+    return tmp->traverse(*right);
   }
 };
 
@@ -116,54 +116,54 @@ struct Step : public SelectorLeaf {
 
   Step(const Key &key) : key_(key) {}
 
-  virtual SelectorLeaf *descendant(SelectorLeaf *right)
-    { return new Wrap(SelectorBranch::descendant(this), right); }
-  virtual SelectorLeaf *conjunction(SelectorLeaf *right)
-    { return new Wrap(SelectorBranch::conjunction(this), right); }
-  virtual SelectorLeaf *disjunction(SelectorLeaf *right)
-    { return new Wrap(SelectorBranch::disjunction(this), right); }
+  virtual P descendant(P left, P right)
+    { return std::make_shared<Wrap>(SelectorBranch::descendant(left), right); }
+  virtual P conjunction(P left, P right)
+    { return std::make_shared<Wrap>(SelectorBranch::conjunction(left), right); }
+  virtual P disjunction(P left, P right)
+    { return std::make_shared<Wrap>(SelectorBranch::disjunction(left), right); }
 
   virtual Node &traverse(BuildContext::P context)
     { return context->node().addChild(key_); }
 };
 
-SelectorLeaf *SelectorLeaf::step(const Key &key) {
-  return new Step(key);
+SelectorLeaf::P SelectorLeaf::step(const Key &key) {
+  return std::make_shared<Step>(key);
 }
 
 class BranchImpl : public SelectorBranch {
-  typedef std::function<BuildContext::P (SelectorLeaf *, BuildContext::P,
+  typedef std::function<BuildContext::P (SelectorLeaf &, BuildContext::P,
       BuildContext::P)> Traverse;
-  std::unique_ptr<SelectorLeaf> first_;
+  SelectorLeaf::P first_;
   Traverse traverse_;
 
 public:
-  BranchImpl(SelectorLeaf *first, Traverse traverse) :
+  BranchImpl(SelectorLeaf::P first, Traverse traverse) :
     first_(first), traverse_(traverse) {}
 
   virtual BuildContext::P traverse(BuildContext::P context,
       BuildContext::P baseContext) {
-    return traverse_(first_.get(), context, baseContext);
+    return traverse_(*first_, context, baseContext);
   }
 };
 
-SelectorBranch *SelectorBranch::descendant(SelectorLeaf *first) {
-  return new BranchImpl(first, [](SelectorLeaf *first, BuildContext::P context,
-      BuildContext::P baseContext) {
+SelectorBranch::P SelectorBranch::descendant(SelectorLeaf::P first) {
+  return std::make_shared<BranchImpl>(first, [](SelectorLeaf &first,
+              BuildContext::P context, BuildContext::P baseContext) {
     return context->descendant(context->traverse(first));
   });
 }
 
-SelectorBranch *SelectorBranch::conjunction(SelectorLeaf *first) {
-  return new BranchImpl(first, [](SelectorLeaf *first, BuildContext::P context,
-      BuildContext::P baseContext) {
+SelectorBranch::P SelectorBranch::conjunction(SelectorLeaf::P first) {
+  return std::make_shared<BranchImpl>(first, [](SelectorLeaf &first,
+              BuildContext::P context, BuildContext::P baseContext) {
     return context->conjunction(context->traverse(first), baseContext);
   });
 }
 
-SelectorBranch *SelectorBranch::disjunction(SelectorLeaf *first) {
-  return new BranchImpl(first, [](SelectorLeaf *first, BuildContext::P context,
-      BuildContext::P baseContext) {
+SelectorBranch::P SelectorBranch::disjunction(SelectorLeaf::P first) {
+  return std::make_shared<BranchImpl>(first, [](SelectorLeaf &first,
+              BuildContext::P context, BuildContext::P baseContext) {
     return context->disjunction(context->traverse(first), baseContext);
   });
 }

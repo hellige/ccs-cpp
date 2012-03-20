@@ -24,7 +24,7 @@ BOOST_FUSION_ADAPT_STRUCT(
 
 BOOST_FUSION_ADAPT_STRUCT(
     ccs::ast::Nested,
-    (std::shared_ptr<ccs::ast::SelectorBranch>, selector_)
+    (ccs::ast::SelectorBranch::P, selector_)
     (std::vector<ccs::ast::AstRule>, rules_)
 )
 
@@ -45,14 +45,14 @@ struct ccs_grammar : qi::grammar<Iterator, ast::Nested(), qi::rule<Iterator>> {
   qi::rule<I, void(ast::PropDef &)> modifiers;
   qi::rule<I, Value()> val;
   qi::rule<I, ast::PropDef(), typeof(skipper)> property;
-  qi::rule<I, std::shared_ptr<ast::SelectorBranch>(), typeof(skipper)> selector;
+  qi::rule<I, ast::SelectorBranch::P(), typeof(skipper)> selector;
   qi::rule<I, void(Key &, const string &)> vals;
   qi::rule<I, void(Key &), qi::locals<string>> singlestep;
   qi::rule<I, void(Key &)> stepsuffix;
-  qi::rule<I, ast::SelectorLeaf*(), typeof(skipper), qi::locals<Key>> step;
-  qi::rule<I, ast::SelectorLeaf*(), typeof(skipper)> term;
-  qi::rule<I, ast::SelectorLeaf*(), typeof(skipper)> product;
-  qi::rule<I, ast::SelectorLeaf*(), typeof(skipper)> sum;
+  qi::rule<I, ast::SelectorLeaf::P(), typeof(skipper), qi::locals<Key>> step;
+  qi::rule<I, ast::SelectorLeaf::P(), typeof(skipper)> term;
+  qi::rule<I, ast::SelectorLeaf::P(), typeof(skipper)> product;
+  qi::rule<I, ast::SelectorLeaf::P(), typeof(skipper)> sum;
 
   qi::rule<I, ast::Import(), typeof(skipper)> import;
   qi::rule<I, ast::Constraint(), typeof(skipper)> constraint;
@@ -110,11 +110,11 @@ struct ccs_grammar : qi::grammar<Iterator, ast::Nested(), qi::rule<Iterator>> {
                         >> -vals(_r1, _a) >> -stepsuffix(_r1);
 
     term = step [_val = _1] >> *(lit('>') >> step
-        [_val = bind(&ast::SelectorLeaf::descendant, _val, _1)]);
+        [_val = bind(&ast::SelectorLeaf::desc, _val, _1)]);
     product = term [_val = _1] >> *(term
-        [_val = bind(&ast::SelectorLeaf::conjunction, _val, _1)]);
+        [_val = bind(&ast::SelectorLeaf::conj, _val, _1)]);
     sum = product [_val = _1] >> *(',' >> product
-        [_val = bind(&ast::SelectorLeaf::disjunction, _val, _1)]);
+        [_val = bind(&ast::SelectorLeaf::disj, _val, _1)]);
     step = singlestep(_a) [_val = bind(&ast::SelectorLeaf::step, _a)]
         | ('(' > sum [_val = _1] >> ')');
     selector = (sum >> -qi::string(">")) [_val = bind(branch, _1, _2)];
@@ -141,11 +141,10 @@ struct ccs_grammar : qi::grammar<Iterator, ast::Nested(), qi::rule<Iterator>> {
     propDef.origin_ = Origin(pos.file, pos.line);
   }
 
-  static std::shared_ptr<ast::SelectorBranch> branch(ast::SelectorLeaf *leaf,
+  static std::shared_ptr<ast::SelectorBranch> branch(ast::SelectorLeaf::P leaf,
       boost::optional<string> opt) {
-    return std::shared_ptr<ast::SelectorBranch>(opt ?
-        ast::SelectorBranch::descendant(leaf)
-      : ast::SelectorBranch::conjunction(leaf));
+    return opt ? ast::SelectorBranch::descendant(leaf)
+               : ast::SelectorBranch::conjunction(leaf);
   }
 
   bool parse(I &iter, I end, ast::Nested &ast) {

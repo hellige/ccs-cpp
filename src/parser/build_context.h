@@ -23,7 +23,7 @@ public:
   virtual ~BuildContext() {}
 
   virtual Node &node() = 0;
-  virtual Node &traverse(ast::SelectorLeaf *selector) = 0;
+  virtual Node &traverse(ast::SelectorLeaf &selector) = 0;
 
   static BuildContext::P descendant(DagBuilder &dag, Node &root);
   BuildContext::P descendant(Node &node);

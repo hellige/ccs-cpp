@@ -51,24 +51,34 @@ typedef boost::variant<
 struct SelectorLeaf;
 
 struct SelectorBranch {
+  typedef std::shared_ptr<SelectorBranch> P;
   virtual ~SelectorBranch() {}
   virtual std::shared_ptr<BuildContext> traverse(
       std::shared_ptr<BuildContext> context,
       std::shared_ptr<BuildContext> baseContext) = 0;
 
-  static SelectorBranch *descendant(SelectorLeaf *first);
-  static SelectorBranch *conjunction(SelectorLeaf *first);
-  static SelectorBranch *disjunction(SelectorLeaf *first);
+  static P descendant(std::shared_ptr<SelectorLeaf> first);
+  static P conjunction(std::shared_ptr<SelectorLeaf> first);
+  static P disjunction(std::shared_ptr<SelectorLeaf> first);
 };
 
 struct SelectorLeaf {
+  typedef std::shared_ptr<SelectorLeaf> P;
   virtual ~SelectorLeaf() {};
   virtual Node &traverse(std::shared_ptr<BuildContext> context) = 0;
-  virtual SelectorLeaf *descendant(SelectorLeaf *right) = 0;
-  virtual SelectorLeaf *conjunction(SelectorLeaf *right) = 0;
-  virtual SelectorLeaf *disjunction(SelectorLeaf *right) = 0;
 
-  static SelectorLeaf *step(const Key &key);
+  static P desc(P left, P right)
+    { return left->descendant(left, right); }
+  static P conj(P left, P right)
+    { return left->conjunction(left, right); }
+  static P disj(P left, P right)
+    { return left->disjunction(left, right); }
+  static P step(const Key &key);
+
+private:
+  virtual P descendant(P left, P right) = 0;
+  virtual P conjunction(P left, P right) = 0;
+  virtual P disjunction(P left, P right) = 0;
 };
 
 struct Nested {

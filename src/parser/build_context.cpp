@@ -19,8 +19,10 @@ public:
     node_(node) {}
 
   virtual Node &node() { return node_; }
-  virtual Node &traverse(ast::SelectorLeaf *selector)
-    { return selector->traverse(std::make_shared<Descendant>(*this)); }
+  // this copy-into-new-shared-ptr thing is ugly, but enable_shared_from_this
+  // is just as bad, or worse...
+  virtual Node &traverse(ast::SelectorLeaf &selector)
+    { return selector.traverse(std::make_shared<Descendant>(*this)); }
 };
 
 template <typename T>
@@ -36,8 +38,8 @@ public:
 
   virtual Node &node() { return firstNode_; }
 
-  virtual Node &traverse(ast::SelectorLeaf *selector) {
-    Node &secondNode = selector->traverse(baseContext_);
+  virtual Node &traverse(ast::SelectorLeaf &selector) {
+    Node &secondNode = selector.traverse(baseContext_);
     std::set<std::shared_ptr<Tally>> tallies;
 
     std::set_intersection(

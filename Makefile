@@ -74,7 +74,7 @@ all: $(ALL_T) $(TESTS_PASSED) $(CP_INCLUDE) $(TARBALL)
 $(FIG_MAIN): package.fig
 	fig -m -c build && touch $@
 
-$(FIG_TEST): package.fig
+$(FIG_TEST): package.fig $(LIB_SO)
 	fig -m -c test && touch $@
 
 $(MAIN_O):out/main/%.o: $(MAIN_DIR)/%.cpp $(FIG_MAIN)

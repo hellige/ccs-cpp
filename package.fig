@@ -14,5 +14,6 @@ config build
 end
 
 config test
+  include :build
   include gmock/1.4.0
 end

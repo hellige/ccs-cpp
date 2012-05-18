@@ -116,7 +116,7 @@ $(TEST_T): $(TEST_O) $(LIB_A)
 	@mkdir -p $(dir $@)
 	$(CXX) -o $@ $^ $(PLATLDFLAGS) $(LIBS) $(LIBS_TEST)
 	
-$(TARBALL): $(ALL_T) $(CP_INCLUDE)
+$(TARBALL): $(ALL_T) $(TESTS_PASSED) $(CP_INCLUDE)
 	tar zcfp $@ dist
 
 $(TESTS_PASSED): $(TEST_T) tests.txt

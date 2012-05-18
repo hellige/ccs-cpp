@@ -21,7 +21,8 @@ class CcsContext {
   std::shared_ptr<SearchState> searchState;
 
   friend class CcsDomain;
-  CcsContext(std::shared_ptr<const Node> root, CcsLogger &log);
+  CcsContext(std::shared_ptr<const Node> root, CcsLogger &log,
+      bool logAccesses);
   CcsContext(const CcsContext &parent, const Key &key);
   CcsContext(const CcsContext &parent, const std::string &name);
   CcsContext(const CcsContext &parent, const std::string &name,
@@ -122,8 +123,7 @@ public:
 struct no_such_property : public virtual std::exception {
   std::string msg;
   CcsContext context;
-  no_such_property(const std::string &name, CcsContext context) :
-    msg("no such property: " + name), context(context) {}
+  no_such_property(const std::string &name, CcsContext context);
   virtual ~no_such_property() throw() {}
   virtual const char *what() const throw()
     { return msg.c_str(); }

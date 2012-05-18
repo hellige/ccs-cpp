@@ -2,6 +2,7 @@
 
 #include <map>
 #include <set>
+#include <sstream>
 #include <stdexcept>
 
 #include "search_state.h"
@@ -25,19 +26,19 @@ struct MissingProp : public CcsProperty {
 
 namespace { MissingProp Missing; }
 
-CcsContext::CcsContext(std::shared_ptr<const Node> root, CcsLogger &log) :
-    searchState(new SearchState(root, std::shared_ptr<SearchState>(), log)) {}
+CcsContext::CcsContext(std::shared_ptr<const Node> root, CcsLogger &log,
+    bool logAccesses)
+  : searchState(new SearchState(root, log, logAccesses)) {}
 
-CcsContext::CcsContext(const CcsContext &parent, const Key &key) :
-    searchState(SearchState::newChild(parent.searchState, key)) {}
+CcsContext::CcsContext(const CcsContext &parent, const Key &key)
+  : searchState(SearchState::newChild(parent.searchState, key)) {}
 
-CcsContext::CcsContext(const CcsContext &parent, const std::string &name) :
-    searchState(SearchState::newChild(parent.searchState, Key(name, {}))) {}
+CcsContext::CcsContext(const CcsContext &parent, const std::string &name)
+  : searchState(SearchState::newChild(parent.searchState, Key(name, {}))) {}
 
 CcsContext::CcsContext(const CcsContext &parent, const std::string &name,
-    const std::vector<std::string> &values) :
-    searchState(SearchState::newChild(parent.searchState,
-        Key(name, values))) {}
+    const std::vector<std::string> &values)
+  : searchState(SearchState::newChild(parent.searchState, Key(name, values))) {}
 
 CcsContext::Builder CcsContext::builder() const { return Builder(*this); }
 
@@ -164,6 +165,13 @@ CcsContext::Builder &CcsContext::Builder::add(const std::string &name,
   for (auto it = values.cbegin(); it != values.cend(); ++it)
     impl->key.addValue(name, *it);
   return *this;
+}
+
+no_such_property::no_such_property(const std::string &name, CcsContext context)
+  : context(context) {
+  std::ostringstream str;
+  str << "no such property: '" << name << "' (in context: " << context << ")";
+  msg = str.str();
 }
 
 }

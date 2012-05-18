@@ -12,15 +12,16 @@
 namespace ccs {
 
 SearchState::SearchState(const std::shared_ptr<const SearchState> &parent,
-    const Key &key, CcsLogger &log) :
+    const Key &key) :
       parent(parent),
-      log(log),
-      key(key) {}
+      log(parent->log),
+      key(key),
+      logAccesses(parent->logAccesses) {}
 
 SearchState::SearchState(std::shared_ptr<const Node> &root,
-    const std::shared_ptr<const SearchState> &parent,
-    CcsLogger &log) :
-      root(root), parent(parent), log(log) {
+    CcsLogger &log,
+    bool logAccesses) :
+      root(root), log(log), logAccesses(logAccesses) {
   std::set<const Node *> s = { root.get() };
   nodes[Specificity()] = s;
 }
@@ -32,8 +33,7 @@ SearchState::~SearchState() {
 
 std::shared_ptr<SearchState> SearchState::newChild(
     const std::shared_ptr<const SearchState> &parent, const Key &key) {
-  std::shared_ptr<SearchState> searchState(new SearchState(parent, key,
-      parent->log));
+  std::shared_ptr<SearchState> searchState(new SearchState(parent, key));
 
   bool constraintsChanged;
   do {
@@ -62,6 +62,13 @@ const CcsProperty *SearchState::findProperty(const std::string &propertyName)
     const {
   const CcsProperty *prop = findProperty(propertyName, true, true);
   if (!prop) prop = findProperty(propertyName, true, false);
+  if (prop && logAccesses) {
+    std::ostringstream msg;
+    msg << "Found property: " << propertyName
+       << " = " << prop->strValue() << "\n";
+    msg << "\tin context: [" << *this << "]";
+    log.info(msg.str());
+  }
   return prop;
 }
 

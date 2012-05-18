@@ -31,15 +31,14 @@ class SearchState {
   std::map<const AndTally *, const TallyState *> tallyMap;
   CcsLogger &log;
   Key key;
+  bool logAccesses;
   bool constraintsChanged;
 
-  SearchState(const std::shared_ptr<const SearchState> &parent,
-      const Key &key, CcsLogger &log);
+  SearchState(const std::shared_ptr<const SearchState> &parent, const Key &key);
 
 public:
   SearchState(std::shared_ptr<const Node> &root,
-      const std::shared_ptr<const SearchState> &parent,
-      CcsLogger &log);
+      CcsLogger &log, bool logAccesses);
   SearchState(const SearchState &) = delete;
   SearchState &operator=(const SearchState &) = delete;
   ~SearchState();

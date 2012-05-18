@@ -15,6 +15,7 @@ class CcsLogger {
 public:
   static CcsLogger &StdErr;
   virtual ~CcsLogger() {}
+  virtual void info(const std::string &msg) = 0;
   virtual void warn(const std::string &msg) = 0;
   virtual void error(const std::string &msg) = 0;
 };
@@ -30,10 +31,11 @@ public:
 class CcsDomain {
   std::unique_ptr<DagBuilder> dag;
   CcsLogger &log;
+  bool logAccesses;
 
 public:
-  CcsDomain();
-  explicit CcsDomain(CcsLogger &log);
+  explicit CcsDomain(bool logAccesses = false);
+  explicit CcsDomain(CcsLogger &log, bool logAccesses = false);
   ~CcsDomain();
   CcsDomain(const CcsDomain &) = delete;
   CcsDomain &operator=(const CcsDomain &) = delete;

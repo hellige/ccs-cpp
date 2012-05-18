@@ -11,6 +11,8 @@ namespace ccs {
 namespace {
 
 struct StdErrLogger : public CcsLogger {
+  virtual void info(const std::string &msg)
+    { std::cerr << "INFO: " << msg << std::endl; }
   virtual void warn(const std::string &msg)
     { std::cerr << "WARN: " << msg << std::endl; }
   virtual void error(const std::string &msg)
@@ -33,11 +35,11 @@ NoImportResolver NoImportResolver;
 CcsLogger &CcsLogger::StdErr = StdErrLogger;
 ImportResolver &ImportResolver::None = NoImportResolver;
 
-CcsDomain::CcsDomain() :
-  dag(new DagBuilder()), log(CcsLogger::StdErr) {}
+CcsDomain::CcsDomain(bool logAccesses) :
+  dag(new DagBuilder()), log(CcsLogger::StdErr), logAccesses(logAccesses) {}
 
-CcsDomain::CcsDomain(CcsLogger &log) :
-  dag(new DagBuilder()), log(log) {}
+CcsDomain::CcsDomain(CcsLogger &log, bool logAccesses) :
+  dag(new DagBuilder()), log(log), logAccesses(logAccesses) {}
 
 CcsDomain::~CcsDomain() {}
 
@@ -49,7 +51,7 @@ CcsDomain &CcsDomain::loadCcsStream(std::istream &stream,
 }
 
 CcsContext CcsDomain::build() {
-  return CcsContext(dag->root(), log);
+  return CcsContext(dag->root(), log, logAccesses);
 }
 
 }

@@ -19,7 +19,7 @@ struct P {
 
 TEST(ParserTest, BasicPhrases) {
   P parser;
-  EXPECT_FALSE(parser.parse("")); // TODO why?
+  EXPECT_TRUE(parser.parse(""));
   EXPECT_TRUE(parser.parse("\n"));
   EXPECT_TRUE(parser.parse("@import 'file'"));
   EXPECT_TRUE(parser.parse("@context (foo.bar > baz)"));
@@ -35,6 +35,7 @@ TEST(ParserTest, BasicPhrases) {
   EXPECT_FALSE(parser.parse("a.class. class > elem.id {prop=\"val\"}"));
   EXPECT_FALSE(parser.parse("blah"));
   EXPECT_FALSE(parser.parse("@import 'file'; @context (foo)"));
+  EXPECT_TRUE(parser.parse("@import 'file' ; @constrain foo"));
   EXPECT_TRUE(parser.parse("a.class { @import 'file' }"));
   EXPECT_FALSE(parser.parse("a.class { @context (foo) }"));
   EXPECT_TRUE(parser.parse("elem.id { prop = 'val'; prop2 = 31337 }"));
@@ -67,8 +68,12 @@ TEST(ParserTest, UglyAbutments) {
   EXPECT_FALSE(parser.parse("foo{@overridep=1}"));
   EXPECT_FALSE(parser.parse("foo{@override@localp=1}"));
   EXPECT_TRUE(parser.parse("foo{@override @local p=1}"));
-  EXPECT_TRUE(parser.parse("@import'asdf'")); // TODO
-  EXPECT_TRUE(parser.parse("@constrainasdf")); // TODO
+  EXPECT_TRUE(parser.parse("foo{@override /*hi*/ @local /*there*/ p=1}"));
+  EXPECT_FALSE(parser.parse("@import'asdf'"));
+  EXPECT_FALSE(parser.parse("@constrainasdf"));
+  EXPECT_TRUE(parser.parse(
+      "@import 'asdf' \n ; \n @constrain asdf \n ; @import 'foo'  "));
+  EXPECT_TRUE(parser.parse("@import /*hi*/ 'asdf'"));
 }
 
 TEST(ParserTest, SelectorSections) {

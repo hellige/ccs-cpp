@@ -33,6 +33,9 @@ namespace ccs {
 namespace {
 
 
+// MMH it really might be better at this point to ditch spirit's 'skipper'
+// stuff entirely and go with explicit optional/required whitespace, as in
+// the java version.
 template <typename Iterator>
 struct ccs_grammar : qi::grammar<Iterator, ast::Nested(), qi::rule<Iterator>> {
   typedef Iterator I;
@@ -84,7 +87,7 @@ struct ccs_grammar : qi::grammar<Iterator, ast::Nested(), qi::rule<Iterator>> {
 
     strng = qi::lexeme['\'' >> *(char_ - ('\'' | eol)) >> '\'']
            | qi::lexeme['"' >> *(char_ - ('"' | eol)) >> '"'];
-    val %= lit("0x") >> qi::hex [bind(&Value::setInt, _val, _1)]
+    val = lit("0x") >> qi::hex [bind(&Value::setInt, _val, _1)]
         | qi::long_long [bind(&Value::setInt, _val, _1)] >> !lit('.')
         | qi::double_ [bind(&Value::setDouble, _val, _1)]
         | qi::bool_ [bind(&Value::setBool, _val, _1)]
@@ -94,9 +97,9 @@ struct ccs_grammar : qi::grammar<Iterator, ast::Nested(), qi::rule<Iterator>> {
     // properties...
     modifiers =
         -((lit("@override")
-            [bind(&ast::PropDef::override_, _r1) = true] >> skipper) ^
+            [bind(&ast::PropDef::override_, _r1) = true] >> +skipper) ^
         (lit("@local")
-            [bind(&ast::PropDef::local_, _r1) = true ] >> skipper));
+            [bind(&ast::PropDef::local_, _r1) = true ] >> +skipper));
     property = modifiers(_val)
         >> ident [bind(&ast::PropDef::name_, _val) = _1]
         >> '=' > val [bind(&ast::PropDef::value_, _val) = _1];
@@ -120,9 +123,9 @@ struct ccs_grammar : qi::grammar<Iterator, ast::Nested(), qi::rule<Iterator>> {
     selector = (sum >> -qi::string(">")) [_val = bind(branch, _1, _2)];
 
     // rules, rulesets...
-    import %= lit("@import") > strng;
-    constraint %= lit("@constrain")
-        > singlestep(bind(&ast::Constraint::key_, _val));
+    import %= qi::lexeme[lit("@import") > +skipper > strng];
+    constraint %= qi::lexeme[lit("@constrain") > +skipper
+        > singlestep(bind(&ast::Constraint::key_, _val))];
     nested = selector [bind(&ast::Nested::selector_, _val) = _1] >>
         ((':' > (import | constraint | property)
             [bind(&ast::Nested::addRule, _val, _1)])
@@ -130,7 +133,7 @@ struct ccs_grammar : qi::grammar<Iterator, ast::Nested(), qi::rule<Iterator>> {
             [bind(&ast::Nested::rules_, _val) = _1]);
     rulebody = import | constraint | property | nested;
     rule = qi::skip(skipper.alias())[rulebody] >>
-        (lit(';') | skipper | &lit('}') | eoi);
+        ((+skipper || lit(';')) | &lit('}') | eoi);
     auto context = lit("@context") > '(' > selector > ')' > -lit(';');
     ruleset %= -context > *rule > eoi;
   }

@@ -138,6 +138,7 @@ spotless: clean
 	-$(RM) $(FIG_MAIN)
 	-$(RM) $(FIG_TEST)
 	-$(RM) -r dist out lib include
+	-$(RM) -r .fig
 
 echo:
 	@echo "******************************************"

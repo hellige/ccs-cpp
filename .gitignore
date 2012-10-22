@@ -2,7 +2,7 @@
 /include
 /lib
 /out
-/resources.tar.gz
+/ccs-cpp.tar.gz
 /.headers_copied
 /.tests_passed
 /.fig_done_*

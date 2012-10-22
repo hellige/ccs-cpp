@@ -4,15 +4,16 @@
 #include <map>
 #include <memory>
 #include <ostream>
+#include <sstream>
 #include <set>
 
+#include "ccs/domain.h"
 #include "dag/key.h"
 #include "dag/specificity.h"
 
 namespace ccs {
 
 class AndTally;
-class CcsLogger;
 class CcsProperty;
 class Node;
 class TallyState;
@@ -53,8 +54,27 @@ public:
   void add(Specificity spec, Node *node)
     { nodes[spec].insert(node); }
 
-  void constrain(const Key &constraints) {
-    constraintsChanged |= key.addAll(constraints);
+  void constrain(const Key &constraints)
+    { constraintsChanged |= key.addAll(constraints); }
+
+  template <typename T>
+  const CcsProperty *findProperty(const std::string &propertyName,
+      T defaultVal) {
+    const CcsProperty *prop = findProperty(propertyName, true, true);
+    if (!prop) prop = findProperty(propertyName, true, false);
+    if (logAccesses) {
+      std::ostringstream msg;
+      if (prop) {
+        msg << "Found property: " << propertyName << " = "
+          << prop->strValue() << "\n";
+      } else {
+        msg << "Property not found: " << propertyName << ". Default = "
+          << defaultVal << "\n";
+      }
+      msg << "    in context: [" << *this << "]";
+      log.info(msg.str());
+    }
+    return prop;
   }
 
   const TallyState *getTallyState(const AndTally *tally) const;

@@ -1,7 +1,6 @@
 #include "search_state.h"
 
 #include <algorithm>
-#include <sstream>
 
 #include "ccs/domain.h"
 #include "dag/key.h"
@@ -62,16 +61,19 @@ const CcsProperty *SearchState::findProperty(const std::string &propertyName)
     const {
   const CcsProperty *prop = findProperty(propertyName, true, true);
   if (!prop) prop = findProperty(propertyName, true, false);
-  if (prop && logAccesses) {
+  if (logAccesses) {
     std::ostringstream msg;
-    msg << "Found property: " << propertyName
-       << " = " << prop->strValue() << "\n";
-    msg << "\tin context: [" << *this << "]";
+    if (prop) {
+      msg << "Found property: " << propertyName
+         << " = " << prop->strValue() << "\n";
+    } else {
+      msg << "Property not found: " << propertyName << "\n";
+    }
+    msg << "    in context: [" << *this << "]";
     log.info(msg.str());
   }
   return prop;
 }
-
 
 const CcsProperty *SearchState::findProperty(const std::string &propertyName,
     bool locals, bool override) const {

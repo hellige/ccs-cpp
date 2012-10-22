@@ -3,7 +3,7 @@ LIB_NAME = ccs
 API_DIR = api
 MAIN_DIR = src
 TEST_DIR = test
-TARBALL = resources.tar.gz
+TARBALL = ccs-cpp.tar.gz
 
 ifdef CCACHE_HOME
   CCACHE = $(CCACHE_HOME)/bin/ccache

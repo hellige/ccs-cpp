@@ -58,9 +58,9 @@ const std::string &CcsContext::getString(const std::string &propertyName)
 
 const std::string &CcsContext::getString(const std::string &propertyName,
     const std::string &defaultVal) const {
-  const CcsProperty &prop(getProperty(propertyName));
-  if (!prop.exists()) return defaultVal;
-  return prop.strValue();
+  const CcsProperty *prop(searchState->findProperty(propertyName, defaultVal));
+  if (!prop) return defaultVal;
+  return prop->strValue();
 }
 
 bool CcsContext::getInto(std::string &dest, const std::string &propertyName)
@@ -78,9 +78,9 @@ int CcsContext::getInt(const std::string &propertyName) const {
 }
 
 int CcsContext::getInt(const std::string &propertyName, int defaultVal) const {
-  const CcsProperty &prop(getProperty(propertyName));
-  if (!prop.exists()) return defaultVal;
-  return prop.intValue();
+  const CcsProperty *prop(searchState->findProperty(propertyName, defaultVal));
+  if (!prop) return defaultVal;
+  return prop->intValue();
 }
 
 bool CcsContext::getInto(int &dest, const std::string &propertyName)
@@ -99,9 +99,9 @@ double CcsContext::getDouble(const std::string &propertyName) const {
 
 double CcsContext::getDouble(const std::string &propertyName,
     double defaultVal) const {
-  const CcsProperty &prop(getProperty(propertyName));
-  if (!prop.exists()) return defaultVal;
-  return prop.doubleValue();
+  const CcsProperty *prop(searchState->findProperty(propertyName, defaultVal));
+  if (!prop) return defaultVal;
+  return prop->doubleValue();
 }
 
 bool CcsContext::getInto(double &dest, const std::string &propertyName)
@@ -120,9 +120,9 @@ bool CcsContext::getBool(const std::string &propertyName) const {
 
 bool CcsContext::getBool(const std::string &propertyName, bool defaultVal)
     const {
-  const CcsProperty &prop(getProperty(propertyName));
-  if (!prop.exists()) return defaultVal;
-  return prop.boolValue();
+  const CcsProperty *prop(searchState->findProperty(propertyName, defaultVal));
+  if (!prop) return defaultVal;
+  return prop->boolValue();
 }
 
 bool CcsContext::getInto(bool &dest, const std::string &propertyName)

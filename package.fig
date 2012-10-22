@@ -1,4 +1,4 @@
-archive "resources.tar.gz"
+archive "ccs-cpp.tar.gz"
 
 retrieve LIBPATH->lib
 retrieve INCLUDEPATH->include

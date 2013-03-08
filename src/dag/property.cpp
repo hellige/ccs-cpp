@@ -46,8 +46,8 @@ struct Interpolate : public boost::static_visitor<std::string> {
 
 std::string StringVal::str() const {
   std::ostringstream str;
-  for (auto elem : elements_)
-    str << boost::apply_visitor(Interpolate(), elem);
+  for (auto it = elements_.begin(); it != elements_.end(); ++it)
+    str << boost::apply_visitor(Interpolate(), *it);
   return str.str();
 }
 

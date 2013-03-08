@@ -6,7 +6,7 @@ This is a C++ implementation of [CCS][1].
 [1]: http://github.com/hellige/ccs
 
 Syntax quick reference
-======================
+----------------------
 
 #### @context (a.b c, d)
 
@@ -19,7 +19,7 @@ rules. Equivalent to:
 
 Property definition. Property _name_ will have the specified value in the
 current context. The syntax of values is conventional: _true_, _false_,
-64-bit signed integers (may be specified in hex as _0x1a2bc_, doubles,
+64-bit signed integers (may be specified in hex as _0x1a2bc_), doubles,
 and strings.
 
 #### 'name with spaces' = 'value'
@@ -27,8 +27,7 @@ and strings.
 _name_ may be enclosed in quotes and written as a string literal if it
 contains spaces or other non-identifier characters.
 
-#### 'VAR: ${VAR}'
-#### "literal: \${VAR}"
+#### 'VAR: ${VAR}' <br> "literal: \${VAR}"
 
 Strings may be enclosed in single or double quotes. Environment variables may
 be interpolated with ```${VAR}```. Special characters may be escaped with a
@@ -36,13 +35,11 @@ backslash. Recognized escape sequences include: ```\t \n \r \' \" \\ \$```.
 A string may be broken across multiple lines by ending a line with a single 
 backslash.
 
-#### 'double: ", single: \''
-#### "double: \", single: '"
+#### 'double: ", single: \'' <br> "double: \", single: '"
 
 The non-delimiting quote character need not be escaped.
 
-#### @import "..."
-#### a b.c d : @import "..."
+#### @import "..." <br> a b.c d : @import "..."
 
 Import a ruleset into the current ruleset. The entire imported ruleset will be
 nested in the current context, so for example the second example above further
@@ -58,10 +55,7 @@ context, in which case it allows for some additional reuse and
 modularity within CCS rulesets (activating additional sets of rules in
 particular cases, for example). 
 
-#### _selector_ : @import "_..._"
-#### _selector_ : @constrain _..._
-#### _selector_ : _name_ = _value_
-#### _selector_ { _rules_ }
+#### _selector_ : @import "..." <br> _selector_ : @constrain _..._ <br> _selector_ : _name_ = _value_ <br> _selector_ { _rules_ }
 
 Constrain rules to apply only in the selected context. _rule_ is any of:
 an import, a property setting, a constraint, or a selector and further nested
@@ -76,19 +70,17 @@ constraints of the same type are allowed (thus preserving monotonicity), so
 
 ### a/c
 
-(_Rarely needed._)
+_Rarely needed._
 
 Matches a simultaneous occurence of constraints of type ```a``` and type
 ```c```. Again, this is not generally equivalent to ```a c```, as it only
 matches when the two constraints are applied in the same single step.
 
-#### a.b c.d
-#### a.b, c.d
-#### a.b > c.d
+#### a.b c.d <br> a.b, c.d <br> a.b > c.d
 
-Conjunction (*AND*), disjunction (*OR*), and descendant selection,
-respectively. The first form matches in any context containing _both_ ```a.b```
-and ```c.d```. The second matches in any context containing _either one_.
+Conjunction, disjunction, and descendant selection, respectively. The first
+form matches in any context containing _both_ ```a.b``` and ```c.d```.
+The second matches in any context containing _either one_.
 
 The third form matches in any context containing ```c.d```, _itself_ in a
 context containing ```a.b```. This form is infrequently used in CCS (although it
@@ -112,10 +104,6 @@ completely optional and will never affect the way the ruleset is parsed.
 TODO
 ----
 
-* Support or-conditions in selectors via comma operator (as in CSS).
-* Support nested rules, perhaps via "local activation of global rule."
 * Aggregate values: lists, maps.
 * For aggregate values, allow modification of inherited value as well as
   replacement??
-* API approach: custom value oject wrappers in the interface, destruction
-  just detaches from the shared structure. Ref counting for final disposal.

@@ -114,7 +114,8 @@ TEST(CcsTest, TemplateGetters) {
 
 TEST(CcsTest, TemplatedBool) {
   CcsDomain ccs;
-  std::istringstream input("a = true; b = 'true'; c = false; d = 'false'; e = '1'");
+  std::istringstream input(
+      "a = true; b = 'true'; c = false; d = 'false'; e = '1'");
   ccs.loadCcsStream(input, "<literal>", ImportResolver::None);
   CcsContext ctx = ccs.build();
   EXPECT_TRUE(ctx.get<bool>("a"));
@@ -162,10 +163,24 @@ TEST(CcsTest, InterpolationIsDoneAtLoadTime) {
 
 TEST(CcsTest, Escapes) {
   CcsDomain ccs;
-  std::istringstream input("a = '\\\"\\t\\n\\'s'; b = '\\\\'; c = 'Hi \\\nthere'");
+  std::istringstream input(
+      "a = '\\\"\\t\\n\\'s'; b = '\\\\'; c = 'Hi \\\nthere'");
   ccs.loadCcsStream(input, "<literal>", ImportResolver::None);
   CcsContext ctx = ccs.build();
   EXPECT_EQ("\"\t\n's", ctx.getString("a"));
   EXPECT_EQ("\\", ctx.getString("b"));
   EXPECT_EQ("Hi there", ctx.getString("c"));
+}
+
+TEST(CcsTest, DomainBuilder) {
+  CcsDomain ccs;
+  ccs.ruleBuilder()
+      .set("a", "base")
+      .select("a", {"b"}).set("a", "123").pop()
+      .select("c").set("b", "true").pop()
+      .select("c", {"d"}).set("b", "false").pop();
+  CcsContext ctx = ccs.build();
+  EXPECT_EQ("base", ctx.getString("a"));
+  EXPECT_EQ("123", ctx.constrain("a", {"b"}).getString("a"));
+  EXPECT_EQ("base", ctx.constrain("c").getString("a"));
 }

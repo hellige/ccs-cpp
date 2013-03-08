@@ -50,6 +50,10 @@ CcsDomain &CcsDomain::loadCcsStream(std::istream &stream,
   return *this;
 }
 
+RuleBuilder CcsDomain::ruleBuilder() {
+  return RuleBuilder(*dag);
+}
+
 CcsContext CcsDomain::build() {
   return CcsContext(dag->root(), log, logAccesses);
 }

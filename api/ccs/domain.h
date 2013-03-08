@@ -6,6 +6,7 @@
 #include <string>
 
 #include "ccs/context.h"
+#include "ccs/rule_builder.h"
 
 namespace ccs {
 
@@ -42,6 +43,7 @@ public:
 
   CcsDomain &loadCcsStream(std::istream &stream, const std::string &fileName,
       ImportResolver &importResolver);
+  RuleBuilder ruleBuilder();
 
   CcsContext build();
 };

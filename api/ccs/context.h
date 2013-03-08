@@ -73,10 +73,11 @@ public:
 
   friend std::ostream &operator<<(std::ostream &, const CcsContext);
 
+  template<class T>
+  static bool coerceString(const std::string &s, T &dest);
+
 private:
   static bool checkEmpty(std::istream &stream);
-  template<class T>
-  static bool string_to_T(const std::string &s, T &dest);
 };
 
 
@@ -89,32 +90,33 @@ struct no_such_property : public virtual std::exception {
     { return msg.c_str(); }
 };
 
-struct wrong_type : public virtual std::exception {
+struct bad_coercion : public virtual std::exception {
   std::string msg;
-  wrong_type(const std::string &name) :
-    msg("property has wrong type: " + name) {}
-  virtual ~wrong_type() throw() {}
+  bad_coercion(const std::string &name, const std::string &value) :
+    msg(std::string("property cannot be coerced to requested type: ") + name
+        + " with value " + value) {}
+  virtual ~bad_coercion() throw() {}
   virtual const char *what() const throw()
     { return msg.c_str(); }
 };
 
 
 template<class T>
-bool CcsContext::string_to_T(const std::string &s, T &dest) {
+bool CcsContext::coerceString(const std::string &s, T &dest) {
   std::istringstream ist(s);
   ist >> dest;
   return checkEmpty(ist);
 }
 
 template<>
-inline bool CcsContext::string_to_T<std::string>(const std::string &s,
+inline bool CcsContext::coerceString<std::string>(const std::string &s,
     std::string &dest) {
   dest = s;
   return true;
 }
 
 template<>
-inline bool CcsContext::string_to_T<bool>(const std::string &s,
+inline bool CcsContext::coerceString<bool>(const std::string &s,
     bool &dest) {
   // convert from a string to a bool: value must be exactly "true" or "false",
   // for maximum consistency with ccs boolean literals.
@@ -131,9 +133,9 @@ inline bool CcsContext::string_to_T<bool>(const std::string &s,
 
 template <typename T>
 T CcsContext::get(const std::string &propertyName) const {
+  auto &val = getString(propertyName);
   T t;
-  if (!string_to_T(getString(propertyName), t))
-    throw wrong_type(propertyName);
+  if (!coerceString(val, t)) throw bad_coercion(propertyName, val);
   return t;
 }
 
@@ -142,7 +144,7 @@ T CcsContext::get(const std::string &propertyName, const T &defaultVal) const {
   std::string str;
   if (!getInto(str, propertyName)) return defaultVal;
   T t;
-  if (!string_to_T(str, t)) return defaultVal;
+  if (!coerceString(str, t)) return defaultVal;
   return t;
 }
 
@@ -150,7 +152,7 @@ template <typename T>
 bool CcsContext::getInto(T &dest, const std::string &propertyName) const {
   std::string str;
   if (!getInto(str, propertyName)) return false;
-  return string_to_T(str, dest);
+  return coerceString(str, dest);
 }
 
 

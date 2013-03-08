@@ -13,11 +13,14 @@ namespace {
 
 template <typename S>
 struct Caster : public boost::static_visitor<S> {
-  const std::string &name;
-  Caster(const std::string &name) : name(name) {}
+  const Value &val;
+  Caster(const Value &val) : val(val) {}
   template <typename T>
   S operator()(const T &v) const {
-    throw wrong_type(name);
+    S s;
+    if (!CcsContext::coerceString(val.strVal_, s))
+      throw bad_coercion(val.name_, val.strVal_);
+    return s;
   }
   S operator()(const S &v) const { return v; }
 };
@@ -53,11 +56,11 @@ std::string StringVal::str() const {
 
 
 int Value::asInt() const
-  { return boost::apply_visitor(Caster<int64_t>(name_), val_); }
+  { return boost::apply_visitor(Caster<int64_t>(*this), val_); }
 double Value::asDouble() const
-  { return boost::apply_visitor(Caster<double>(name_), val_); }
+  { return boost::apply_visitor(Caster<double>(*this), val_); }
 bool Value::asBool() const
-  { return boost::apply_visitor(Caster<bool>(name_), val_); }
+  { return boost::apply_visitor(Caster<bool>(*this), val_); }
 void Value::str()
   { strVal_ = boost::apply_visitor(ToString(), val_); }
 

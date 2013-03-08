@@ -63,28 +63,28 @@ TEST(CcsTest, Types) {
   CcsContext ctx = ccs.build();
 
   ASSERT_NO_THROW(EXPECT_EQ(3, ctx.getInt("a")));
-  ASSERT_THROW(ctx.getDouble("a"), wrong_type);
-  ASSERT_THROW(ctx.getBool("a"), wrong_type);
+  ASSERT_NO_THROW(EXPECT_EQ(3.0, ctx.getDouble("a")));
+  ASSERT_THROW(ctx.getBool("a"), bad_coercion);
   ASSERT_NO_THROW(EXPECT_EQ("3", ctx.getString("a")));
 
   ASSERT_NO_THROW(EXPECT_EQ(255, ctx.getInt("a2")));
-  ASSERT_THROW(ctx.getDouble("a2"), wrong_type);
-  ASSERT_THROW(ctx.getBool("a2"), wrong_type);
+  ASSERT_NO_THROW(EXPECT_EQ(255.0, ctx.getDouble("a2")));
+  ASSERT_THROW(ctx.getBool("a2"), bad_coercion);
   ASSERT_NO_THROW(EXPECT_EQ("255", ctx.getString("a2")));
 
-  ASSERT_THROW(ctx.getInt("b"), wrong_type);
-  ASSERT_THROW(ctx.getDouble("b"), wrong_type);
+  ASSERT_THROW(ctx.getInt("b"), bad_coercion);
+  ASSERT_THROW(ctx.getDouble("b"), bad_coercion);
   ASSERT_NO_THROW(EXPECT_EQ(true, ctx.getBool("b")));
   ASSERT_NO_THROW(EXPECT_EQ("true", ctx.getString("b")));
 
-  ASSERT_THROW(ctx.getInt("c"), wrong_type);
+  ASSERT_THROW(ctx.getInt("c"), bad_coercion);
   ASSERT_NO_THROW(EXPECT_EQ(1.23, ctx.getDouble("c")));
-  ASSERT_THROW(ctx.getBool("c"), wrong_type);
+  ASSERT_THROW(ctx.getBool("c"), bad_coercion);
   ASSERT_NO_THROW(EXPECT_EQ("1.23", ctx.getString("c")));
 
-  ASSERT_THROW(ctx.getInt("d"), wrong_type);
-  ASSERT_THROW(ctx.getDouble("d"), wrong_type);
-  ASSERT_THROW(ctx.getBool("d"), wrong_type);
+  ASSERT_THROW(ctx.getInt("d"), bad_coercion);
+  ASSERT_THROW(ctx.getDouble("d"), bad_coercion);
+  ASSERT_THROW(ctx.getBool("d"), bad_coercion);
   ASSERT_NO_THROW(EXPECT_EQ("ok", ctx.getString("d")));
 }
 
@@ -184,3 +184,31 @@ TEST(CcsTest, DomainBuilder) {
   EXPECT_EQ("123", ctx.constrain("a", v("b")).getString("a"));
   EXPECT_EQ("base", ctx.constrain("c").getString("a"));
 }
+
+TEST(CcsTest, Coercion) {
+  CcsDomain ccs;
+  ccs.ruleBuilder()
+      .set("int", "123")
+      .set("double", "123.0")
+      .set("bool", "true");
+  CcsContext ctx = ccs.build();
+  EXPECT_EQ(123, ctx.getInt("int"));
+  EXPECT_EQ(123.0, ctx.getDouble("int"));
+  EXPECT_EQ(123.0, ctx.getDouble("double"));
+  EXPECT_EQ(true, ctx.getBool("bool"));
+}
+
+TEST(CcsTest, CoercionInterpolation) {
+  setenv("F1", "23", true);
+  setenv("F2", ".0", true);
+  CcsDomain ccs;
+  std::istringstream input(
+      "int1 = '${F1}'; int2 = '1${F1}4'; double1 = '${F2}'; double2 = '1${F2}1'");
+  ccs.loadCcsStream(input, "<literal>", ImportResolver::None);
+  CcsContext ctx = ccs.build();
+  EXPECT_EQ(23, ctx.getInt("int1"));
+  EXPECT_EQ(1234, ctx.getInt("int2"));
+  EXPECT_EQ(0, ctx.getDouble("double1"));
+  EXPECT_EQ(1.01, ctx.getDouble("double2"));
+}
+

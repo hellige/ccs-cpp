@@ -2,6 +2,7 @@
 #define CCS_DAG_PROPERTY_H_
 
 #include <cstdint>
+#include <vector>
 
 #include <boost/variant.hpp>
 
@@ -9,14 +10,33 @@
 
 namespace ccs {
 
+struct Interpolant {
+  std::string name;
+};
+
+typedef boost::variant<
+    std::string,
+    Interpolant>
+  StringElem;
+
+struct StringVal {
+  std::vector<StringElem> elements_;
+
+  StringVal() {}
+  explicit StringVal(const std::string &str) {
+    elements_.push_back(str);
+  }
+  std::string str() const;
+};
+
 struct Value {
-  typedef boost::variant <bool, int64_t, double, std::string> V;
+  typedef boost::variant <bool, int64_t, double, StringVal> V;
   V val_;
   std::string strVal_;
   std::string name_;
 
   Value() : val_(false) {}
-  void setString(const std::string &val) { val_ = val; str(); }
+  void setString(const StringVal &val) { val_ = val; str(); }
   void setInt(int64_t val) { val_ = val; str(); }
   void setBool(bool val) { val_ = val; str(); }
   void setDouble(double val) { val_ = val; str(); }

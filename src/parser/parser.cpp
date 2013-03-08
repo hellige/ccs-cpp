@@ -18,6 +18,16 @@ namespace phoenix = boost::phoenix;
 namespace classic = boost::spirit::classic;
 
 BOOST_FUSION_ADAPT_STRUCT(
+    ccs::Interpolant,
+    (string, name)
+)
+
+BOOST_FUSION_ADAPT_STRUCT(
+    ccs::StringVal,
+    (std::vector<ccs::StringElem>, elements_)
+)
+
+BOOST_FUSION_ADAPT_STRUCT(
     ccs::ast::Import,
     (string, location)
 )
@@ -45,6 +55,10 @@ struct ccs_grammar : qi::grammar<Iterator, ast::Nested(), qi::rule<Iterator>> {
 
   qi::rule<I, string()> ident;
   qi::rule<I, string()> strng;
+  qi::rule<I, Interpolant()> interpolant;
+  qi::rule<I, StringVal()> strngval;
+  qi::rule<I, char()> escape;
+  qi::rule<I, string(char)> stringelem;
   qi::rule<I, void(ast::PropDef &)> modifiers;
   qi::rule<I, Value()> val;
   qi::rule<I, ast::PropDef(), typeof(skipper)> property;
@@ -85,13 +99,27 @@ struct ccs_grammar : qi::grammar<Iterator, ast::Nested(), qi::rule<Iterator>> {
             | "//" >> *(char_ - eol) >> (eol | eoi)
             | space;
 
-    strng = qi::lexeme['\'' >> *(char_ - ('\'' | eol)) >> '\'']
-           | qi::lexeme['"' >> *(char_ - ('"' | eol)) >> '"'];
+    interpolant = "${" > +char_("A-Za-z0-9_") > '}';
+    escape = lit('\\') >
+      (lit('$') [_val= '$'] |
+       lit('\'') [_val = '\''] |
+       lit('"') [_val = '"'] |
+       lit('\\') [_val = '\\'] |
+       lit('t') [_val = '\t'] |
+       lit('n') [_val = '\n'] |
+       lit('r') [_val = '\r']);
+    stringelem = +(lit("\\\n") | escape | (char_ - (lit(_r1) | '$' | eol)));
+    strng = qi::lexeme['\'' >> -stringelem('\'') >> '\'']
+           | qi::lexeme['"' >> -stringelem('"') >> '"'];
+    strngval =
+          qi::lexeme['\'' >> *(interpolant | stringelem('\'')) >> '\'']
+        | qi::lexeme['"' >> *(interpolant | stringelem('"')) >> '"'];
+
     val = lit("0x") >> qi::hex [bind(&Value::setInt, _val, _1)]
         | qi::long_long [bind(&Value::setInt, _val, _1)] >> !lit('.')
         | qi::double_ [bind(&Value::setDouble, _val, _1)]
         | qi::bool_ [bind(&Value::setBool, _val, _1)]
-        | strng [bind(&Value::setString, _val, _1)];
+        | strngval [bind(&Value::setString, _val, _1)];
     ident %= +char_("A-Za-z0-9$_") | strng;
 
     // properties...

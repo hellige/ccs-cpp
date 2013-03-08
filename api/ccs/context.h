@@ -72,13 +72,68 @@ public:
   bool getInto(T &dest, const std::string &propertyName) const;
 
   friend std::ostream &operator<<(std::ostream &, const CcsContext);
+
+private:
+  static bool checkEmpty(std::istream &stream);
+  template<class T>
+  static bool string_to_T(const std::string &s, T &dest);
 };
+
+
+struct no_such_property : public virtual std::exception {
+  std::string msg;
+  CcsContext context;
+  no_such_property(const std::string &name, CcsContext context);
+  virtual ~no_such_property() throw() {}
+  virtual const char *what() const throw()
+    { return msg.c_str(); }
+};
+
+struct wrong_type : public virtual std::exception {
+  std::string msg;
+  wrong_type(const std::string &name) :
+    msg("property has wrong type: " + name) {}
+  virtual ~wrong_type() throw() {}
+  virtual const char *what() const throw()
+    { return msg.c_str(); }
+};
+
+
+template<class T>
+bool CcsContext::string_to_T(const std::string &s, T &dest) {
+  std::istringstream ist(s);
+  ist >> dest;
+  return checkEmpty(ist);
+}
+
+template<>
+inline bool CcsContext::string_to_T<std::string>(const std::string &s,
+    std::string &dest) {
+  dest = s;
+  return true;
+}
+
+template<>
+inline bool CcsContext::string_to_T<bool>(const std::string &s,
+    bool &dest) {
+  // convert from a string to a bool: value must be exactly "true" or "false",
+  // for maximum consistency with ccs boolean literals.
+  if (s == std::string("true")) {
+    dest = true;
+    return true;
+  }
+  if (s == std::string("false")) {
+    dest = false;
+    return true;
+  }
+  return false;
+}
 
 template <typename T>
 T CcsContext::get(const std::string &propertyName) const {
-  std::istringstream str(getString(propertyName));
   T t;
-  str >> t;
+  if (!string_to_T(getString(propertyName), t))
+    throw wrong_type(propertyName);
   return t;
 }
 
@@ -86,9 +141,8 @@ template <typename T>
 T CcsContext::get(const std::string &propertyName, const T &defaultVal) const {
   std::string str;
   if (!getInto(str, propertyName)) return defaultVal;
-  std::istringstream stream(str);
   T t;
-  stream >> t;
+  if (!string_to_T(str, t)) return defaultVal;
   return t;
 }
 
@@ -96,9 +150,7 @@ template <typename T>
 bool CcsContext::getInto(T &dest, const std::string &propertyName) const {
   std::string str;
   if (!getInto(str, propertyName)) return false;
-  std::istringstream stream(str);
-  stream >> dest;
-  return true;
+  return string_to_T(str, dest);
 }
 
 
@@ -118,24 +170,6 @@ public:
     { return add(name, {}); }
   Builder &add(const std::string &name,
       const std::vector<std::string> &values);
-};
-
-struct no_such_property : public virtual std::exception {
-  std::string msg;
-  CcsContext context;
-  no_such_property(const std::string &name, CcsContext context);
-  virtual ~no_such_property() throw() {}
-  virtual const char *what() const throw()
-    { return msg.c_str(); }
-};
-
-struct wrong_type : public virtual std::exception {
-  std::string msg;
-  wrong_type(const std::string &name) :
-    msg("property has wrong type: " + name) {}
-  virtual ~wrong_type() throw() {}
-  virtual const char *what() const throw()
-    { return msg.c_str(); }
 };
 
 }

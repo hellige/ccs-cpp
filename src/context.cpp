@@ -137,6 +137,12 @@ std::ostream &operator<<(std::ostream &str, const CcsContext ctx) {
   return str << *ctx.searchState;
 }
 
+bool CcsContext::checkEmpty(std::istream &stream) {
+  if (stream.fail()) return false;
+  stream.peek();
+  if (!stream.eof()) return false;
+  return true;
+}
 
 struct CcsContext::Builder::Impl {
   CcsContext context;

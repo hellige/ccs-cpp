@@ -1,3 +1,4 @@
+#include <cstdlib>
 #include <istream>
 
 #include <gtest/gtest.h>
@@ -111,6 +112,18 @@ TEST(CcsTest, TemplateGetters) {
   EXPECT_EQ(16, foo.x);
 }
 
+TEST(CcsTest, TemplatedBool) {
+  CcsDomain ccs;
+  std::istringstream input("a = true; b = 'true'; c = false; d = 'false'; e = '1'");
+  ccs.loadCcsStream(input, "<literal>", ImportResolver::None);
+  CcsContext ctx = ccs.build();
+  EXPECT_TRUE(ctx.get<bool>("a"));
+  EXPECT_TRUE(ctx.get<bool>("b"));
+  EXPECT_FALSE(ctx.get<bool>("c"));
+  EXPECT_FALSE(ctx.get<bool>("d"));
+  EXPECT_ANY_THROW(ctx.get<bool>("e"));
+}
+
 TEST(CcsTest, SameStep) {
   CcsDomain ccs;
   std::istringstream input("a.b.c d.e: test = 'nope'; a.b.c/d.e: test = 'yep'");
@@ -121,4 +134,38 @@ TEST(CcsTest, SameStep) {
       .add("d", std::vector<std::string>{"e"})
       .build();
   EXPECT_EQ("yep", ctx.getString("test"));
+}
+
+TEST(CcsTest, Interpolation) {
+  CcsDomain ccs;
+  setenv("VAR1", "bar", true);
+  std::istringstream input("a = 'foo${VAR1} baz'; b = 'foo\\${VAR1} baz'");
+  ccs.loadCcsStream(input, "<literal>", ImportResolver::None);
+  CcsContext ctx = ccs.build();
+  EXPECT_EQ("foobar baz", ctx.getString("a"));
+  EXPECT_EQ("foo${VAR1} baz", ctx.getString("b"));
+  setenv("VAR1", "quux", true);
+  EXPECT_EQ("foobar baz", ctx.getString("a"));
+  unsetenv("VAR1");
+}
+
+TEST(CcsTest, InterpolationIsDoneAtLoadTime) {
+  CcsDomain ccs;
+  std::istringstream input("a = 'foo${VAR1} baz'");
+  ccs.loadCcsStream(input, "<literal>", ImportResolver::None);
+  CcsContext ctx = ccs.build();
+  EXPECT_EQ("foo baz", ctx.getString("a"));
+  setenv("VAR1", "bar", true);
+  EXPECT_EQ("foo baz", ctx.getString("a"));
+  unsetenv("VAR1");
+}
+
+TEST(CcsTest, Escapes) {
+  CcsDomain ccs;
+  std::istringstream input("a = '\\\"\\t\\n\\'s'; b = '\\\\'; c = 'Hi \\\nthere'");
+  ccs.loadCcsStream(input, "<literal>", ImportResolver::None);
+  CcsContext ctx = ccs.build();
+  EXPECT_EQ("\"\t\n's", ctx.getString("a"));
+  EXPECT_EQ("\\", ctx.getString("b"));
+  EXPECT_EQ("Hi there", ctx.getString("c"));
 }

@@ -1,5 +1,6 @@
 #include "dag/property.h"
 
+#include <cstdlib>
 #include <sstream>
 
 #include <boost/variant/static_visitor.hpp>
@@ -23,6 +24,7 @@ struct Caster : public boost::static_visitor<S> {
 
 struct ToString : public boost::static_visitor<std::string> {
   std::string operator()(bool v) const { return v ? "true" : "false"; }
+  std::string operator()(const StringVal &v) const { return v.str(); }
   template <typename T>
   std::string operator()(const T &v) const {
     std::ostringstream str;
@@ -31,7 +33,24 @@ struct ToString : public boost::static_visitor<std::string> {
   }
 };
 
+struct Interpolate : public boost::static_visitor<std::string> {
+  std::string operator()(const std::string &str) const { return str; }
+  std::string operator()(const Interpolant &interp) const {
+    const char *val = getenv(interp.name.c_str());
+    if (val) return std::string(val);
+    return "";
+  }
+};
+
 }
+
+std::string StringVal::str() const {
+  std::ostringstream str;
+  for (auto elem : elements_)
+    str << boost::apply_visitor(Interpolate(), elem);
+  return str.str();
+}
+
 
 int Value::asInt() const
   { return boost::apply_visitor(Caster<int64_t>(name_), val_); }

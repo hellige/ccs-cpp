@@ -176,11 +176,11 @@ TEST(CcsTest, DomainBuilder) {
   CcsDomain ccs;
   ccs.ruleBuilder()
       .set("a", "base")
-      .select("a", {"b"}).set("a", "123").pop()
+      .select("a", v("b")).set("a", "123").pop()
       .select("c").set("b", "true").pop()
-      .select("c", {"d"}).set("b", "false").pop();
+      .select("c", v("d")).set("b", "false").pop();
   CcsContext ctx = ccs.build();
   EXPECT_EQ("base", ctx.getString("a"));
-  EXPECT_EQ("123", ctx.constrain("a", {"b"}).getString("a"));
+  EXPECT_EQ("123", ctx.constrain("a", v("b")).getString("a"));
   EXPECT_EQ("base", ctx.constrain("c").getString("a"));
 }

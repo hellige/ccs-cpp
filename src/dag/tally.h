@@ -19,7 +19,7 @@ class TallyState {
   Specificity firstMatch;
   Specificity secondMatch;
 
-  TallyState *activate(Node &leg, const Specificity &spec) const;
+  TallyState *activate(const Node &leg, const Specificity &spec) const;
   TallyState *clone() const;
 
   bool fullyMatched() const { return firstMatched && secondMatched; }
@@ -47,15 +47,15 @@ public:
 
   Node &node() { return *node_; }
 
-  virtual void activate(Node &leg, const Specificity &spec,
-      SearchState &searchState) = 0;
+  virtual void activate(const Node &leg, const Specificity &spec,
+      SearchState &searchState) const = 0;
 };
 
 class OrTally : public Tally {
 public:
   OrTally(Node &firstLeg, Node &secondLeg) : Tally(firstLeg, secondLeg) {}
-  virtual void activate(Node &leg, const Specificity &spec,
-      SearchState &searchState);
+  virtual void activate(const Node &leg, const Specificity &spec,
+      SearchState &searchState) const;
 };
 
 class AndTally : public Tally {
@@ -65,8 +65,8 @@ class AndTally : public Tally {
 public:
   AndTally(Node &firstLeg, Node &secondLeg) :
     Tally(firstLeg, secondLeg), emptyState_(*this) {}
-  virtual void activate(Node &leg, const Specificity &spec,
-      SearchState &searchState);
+  virtual void activate(const Node &leg, const Specificity &spec,
+      SearchState &searchState) const;
   const TallyState *emptyState() const { return &emptyState_; }
 };
 

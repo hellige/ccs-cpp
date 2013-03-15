@@ -13,7 +13,8 @@ TallyState *TallyState::clone() const {
   return next;
 }
 
-TallyState *TallyState::activate(Node &leg, const Specificity &spec) const {
+TallyState *TallyState::activate(const Node &leg,
+    const Specificity &spec) const {
   // NB reference equality in the below...
   TallyState *next = clone();
   if (&tally.firstLeg_ == &leg) {
@@ -34,8 +35,8 @@ Tally::Tally(Node &firstLeg, Node &secondLeg) :
 
 Tally::~Tally() {}
 
-void AndTally::activate(Node &leg, const Specificity &spec,
-    SearchState &searchState) {
+void AndTally::activate(const Node &leg, const Specificity &spec,
+    SearchState &searchState) const {
   const TallyState *state = searchState.getTallyState(this)->activate(leg, spec);
   searchState.setTallyState(this, state);
   // seems like this could lead to spurious warnings, but see comment below...
@@ -43,8 +44,8 @@ void AndTally::activate(Node &leg, const Specificity &spec,
     node_->activate(state->specificity(), searchState);
 }
 
-void OrTally::activate(Node &, const Specificity &spec,
-    SearchState &searchState) {
+void OrTally::activate(const Node &, const Specificity &spec,
+    SearchState &searchState) const {
   // no state for or-joins, just re-activate node with the current specificity
   // it seems that this may allow spurious warnings, if multiple legs of the
   // disjunction match with same specificity. but this is detected in

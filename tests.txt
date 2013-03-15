@@ -159,3 +159,30 @@ a.b.c/d.e: test = "correct"
 a.b: test = correct
 ===
 
+Constraints at top level
+---
+@constrain a
+test = "wrong"
+a: test = "right"
+---
+test = right
+===
+
+Chained constraints at top level
+---
+@constrain a
+test = "wrong"
+a: @constrain b.c
+b.c: test = "right"
+---
+test = right
+===
+
+Valueless constraint
+---
+a.b: @constrain c
+c: test = "correct"
+---
+a.b: test = correct
+===
+

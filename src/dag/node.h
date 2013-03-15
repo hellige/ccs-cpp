@@ -55,7 +55,7 @@ public:
     return result;
   }
 
-  void activate(const Specificity &spec, SearchState &searchState) {
+  void activate(const Specificity &spec, SearchState &searchState) const {
     searchState.add(spec, this);
     searchState.constrain(constraints);
     for (auto it = tallies_.begin(); it != tallies_.end(); ++it)

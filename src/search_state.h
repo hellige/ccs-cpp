@@ -51,7 +51,7 @@ public:
 
   const CcsProperty *findProperty(const std::string &propertyName) const;
 
-  void add(Specificity spec, Node *node)
+  void add(Specificity spec, const Node *node)
     { nodes[spec].insert(node); }
 
   void constrain(const Key &constraints)

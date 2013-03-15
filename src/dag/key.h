@@ -34,11 +34,13 @@ public:
   bool operator<(const Key &that) const
     { return values_ < that.values_; }
 
-  void addName(const std::string &name) {
+  bool addName(const std::string &name) {
     if (values_.find(name) == values_.end()) {
       values_[name];
       specificity_.names++;
+      return true;
     }
+    return false;
   }
 
   bool addValue(const std::string &name, const std::string &value) {
@@ -56,9 +58,11 @@ public:
 
   bool addAll(const Key &key) {
     bool changed = false;
-    for (auto it = key.values_.cbegin(); it != key.values_.cend(); ++it)
-        for (auto it2 = it->second.cbegin(); it2 != it->second.cend(); ++it2)
-            changed |= addValue(it->first, *it2);
+    for (auto it = key.values_.cbegin(); it != key.values_.cend(); ++it) {
+      changed |= addName(it->first);
+      for (auto it2 = it->second.cbegin(); it2 != it->second.cend(); ++it2)
+        changed |= addValue(it->first, *it2);
+    }
     return changed;
   }
 

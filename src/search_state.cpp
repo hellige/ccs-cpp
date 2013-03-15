@@ -21,8 +21,12 @@ SearchState::SearchState(std::shared_ptr<const Node> &root,
     CcsLogger &log,
     bool logAccesses) :
       root(root), log(log), logAccesses(logAccesses) {
-  std::set<const Node *> s = { root.get() };
-  nodes[Specificity()] = s;
+  constraintsChanged = false;
+  root->activate(Specificity(), *this);
+  while (constraintsChanged) {
+    constraintsChanged = false;
+    root->getChildren(key, Specificity(), *this);
+  }
 }
 
 SearchState::~SearchState() {

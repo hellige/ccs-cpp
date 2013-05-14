@@ -60,8 +60,8 @@ public:
   template <typename T>
   const CcsProperty *findProperty(const std::string &propertyName,
       T defaultVal) {
-    const CcsProperty *prop = findProperty(propertyName, true);
-    if (!prop) prop = findProperty(propertyName, false);
+    const CcsProperty *prop = doSearch(propertyName, true);
+    if (!prop) prop = doSearch(propertyName, false);
     if (logAccesses) {
       std::ostringstream msg;
       if (prop) {
@@ -81,7 +81,7 @@ public:
   void setTallyState(const AndTally *tally, const TallyState *state);
 
 private:
-  const CcsProperty *findProperty(const std::string &propertyName,
+  const CcsProperty *doSearch(const std::string &propertyName,
       bool override) const;
 
   friend std::ostream &operator<<(std::ostream &, const SearchState &);

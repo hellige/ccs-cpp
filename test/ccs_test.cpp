@@ -123,6 +123,8 @@ TEST(CcsTest, TemplatedBool) {
   EXPECT_FALSE(ctx.get<bool>("c"));
   EXPECT_FALSE(ctx.get<bool>("d"));
   EXPECT_ANY_THROW(ctx.get<bool>("e"));
+  EXPECT_TRUE(ctx.get("unset", true));
+  EXPECT_FALSE(ctx.get("unset", false));
 }
 
 TEST(CcsTest, SameStep) {
@@ -212,3 +214,12 @@ TEST(CcsTest, CoercionInterpolation) {
   EXPECT_EQ(1.01, ctx.getDouble("double2"));
 }
 
+TEST(CcsTest, DefaultVals) {
+  CcsDomain ccs;
+  CcsContext ctx = ccs.build();
+  EXPECT_TRUE(ctx.getBool("nope", true));
+  EXPECT_FALSE(ctx.getBool("nope", false));
+  EXPECT_EQ(1, ctx.getInt("nope", 1));
+  EXPECT_EQ("asdf", ctx.getString("nope", "asdf"));
+  EXPECT_EQ(1.234, ctx.getDouble("nope", 1.234));
+}

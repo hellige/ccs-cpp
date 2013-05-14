@@ -65,8 +65,8 @@ bool SearchState::extendWith(const SearchState &priorState) {
 
 const CcsProperty *SearchState::findProperty(const std::string &propertyName)
     const {
-  const CcsProperty *prop = findProperty(propertyName, true);
-  if (!prop) prop = findProperty(propertyName, false);
+  const CcsProperty *prop = doSearch(propertyName, true);
+  if (!prop) prop = doSearch(propertyName, false);
   if (logAccesses) {
     std::ostringstream msg;
     if (prop) {
@@ -94,7 +94,7 @@ void origins(std::ostream &str, const std::vector<const Property *> &values) {
 
 }
 
-const CcsProperty *SearchState::findProperty(const std::string &propertyName,
+const CcsProperty *SearchState::doSearch(const std::string &propertyName,
     bool override) const {
   for (auto it = nodes.crbegin(); it != nodes.crend(); ++it) {
     std::vector<const Property *> values;

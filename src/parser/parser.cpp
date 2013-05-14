@@ -124,10 +124,8 @@ struct ccs_grammar : qi::grammar<Iterator, ast::Nested(), qi::rule<Iterator>> {
 
     // properties...
     modifiers =
-        -((lit("@override")
-            [bind(&ast::PropDef::override_, _r1) = true] >> +skipper) ^
-        (lit("@local")
-            [bind(&ast::PropDef::local_, _r1) = true ] >> +skipper));
+        -(lit("@override")
+            [bind(&ast::PropDef::override_, _r1) = true] >> +skipper);
     property = modifiers(_val)
         >> ident [bind(&ast::PropDef::name_, _val) = _1]
         >> '=' > val [bind(&ast::PropDef::value_, _val) = _1];

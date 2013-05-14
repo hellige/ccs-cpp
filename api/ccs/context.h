@@ -29,8 +29,8 @@ class CcsContext {
       const std::vector<std::string> &values);
 
 public:
-  CcsContext(const CcsContext &that) = default;
-  CcsContext &operator=(const CcsContext &that) = default;
+  CcsContext(const CcsContext &) = default;
+  CcsContext &operator=(const CcsContext &) = default;
   ~CcsContext() = default;
 
   class Builder;

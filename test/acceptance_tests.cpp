@@ -102,6 +102,7 @@ public:
 
 TEST_P(AcceptanceTests, Load) {
   const CcsTestCase &test = GetParam();
+  std::cout << "Running test: " << test.name << std::endl;
   CcsDomain ccs;
   std::istringstream input(test.ccs);
   ccs.loadCcsStream(input, "<literal>", ImportResolver::None);

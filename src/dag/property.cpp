@@ -17,6 +17,7 @@ struct Caster : public boost::static_visitor<S> {
   Caster(const Value &val) : val(val) {}
   template <typename T>
   S operator()(const T &v) const {
+    (void)v;
     S s;
     if (!CcsContext::coerceString(val.strVal_, s))
       throw bad_coercion(val.name_, val.strVal_);

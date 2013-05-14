@@ -17,7 +17,6 @@ namespace ccs {
 class Node {
   std::map<Key, std::shared_ptr<Node>> children;
   std::multimap<std::string, Property> props;
-  std::multimap<std::string, Property> localProps;
   std::set<std::shared_ptr<Tally>> tallies_;
   Key constraints;
 
@@ -42,13 +41,10 @@ public:
     }
   }
 
-  std::vector<const Property *> getProperty(const std::string &name,
-      bool locals) const {
+  std::vector<const Property *> getProperty(const std::string &name) const {
     std::pair<std::multimap<std::string, Property>::const_iterator,
-      std::multimap<std::string, Property>::const_iterator> range(props.cend(),
-          props.cend());
-    if (locals) range = localProps.equal_range(name);
-    if (range.first == range.second) range = props.equal_range(name);
+      std::multimap<std::string, Property>::const_iterator> range(
+          props.equal_range(name));
     std::vector<const Property *> result;
     for (; range.first != range.second; ++range.first)
       result.push_back(&range.first->second);
@@ -66,11 +62,8 @@ public:
     constraints.addAll(key);
   }
 
-  void addProperty(const std::string &name, const Property &value,
-      bool isLocal) {
-    std::multimap<std::string, Property> &theProps = isLocal ?
-        localProps : props;
-    theProps.insert(std::pair<std::string, Property>(name, value));
+  void addProperty(const std::string &name, const Property &value) {
+    props.insert(std::pair<std::string, Property>(name, value));
   }
 };
 

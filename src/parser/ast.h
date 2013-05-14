@@ -25,10 +25,9 @@ struct PropDef {
   std::string name_;
   Value value_;
   Origin origin_;
-  bool local_;
   bool override_;
 
-  PropDef() : local_(false), override_(false) {}
+  PropDef() : override_(false) {}
 };
 
 

@@ -13,9 +13,11 @@ namespace ccs {
 SearchState::SearchState(const std::shared_ptr<const SearchState> &parent,
     const Key &key) :
       parent(parent),
+      nodes(parent->nodes), // TODO new hotness
       log(parent->log),
       key(key),
-      logAccesses(parent->logAccesses) {}
+      logAccesses(parent->logAccesses),
+      constraintsChanged(false) {}
 
 SearchState::SearchState(std::shared_ptr<const Node> &root,
     CcsLogger &log,
@@ -63,8 +65,8 @@ bool SearchState::extendWith(const SearchState &priorState) {
 
 const CcsProperty *SearchState::findProperty(const std::string &propertyName)
     const {
-  const CcsProperty *prop = findProperty(propertyName, true, true);
-  if (!prop) prop = findProperty(propertyName, true, false);
+  const CcsProperty *prop = findProperty(propertyName, true);
+  if (!prop) prop = findProperty(propertyName, false);
   if (logAccesses) {
     std::ostringstream msg;
     if (prop) {
@@ -77,18 +79,6 @@ const CcsProperty *SearchState::findProperty(const std::string &propertyName)
     log.info(msg.str());
   }
   return prop;
-}
-
-const CcsProperty *SearchState::findProperty(const std::string &propertyName,
-    bool locals, bool override) const {
-  // first, look in nodes newly matched by this pattern...
-  const CcsProperty *prop = doSearch(propertyName, locals, override);
-  if (prop) return prop;
-
-  // if not, then inherit...
-  if (parent) return parent->findProperty(propertyName, false, override);
-
-  return NULL;
 }
 
 namespace {
@@ -104,12 +94,12 @@ void origins(std::ostream &str, const std::vector<const Property *> &values) {
 
 }
 
-const CcsProperty *SearchState::doSearch(const std::string &propertyName,
-    bool locals, bool override) const {
+const CcsProperty *SearchState::findProperty(const std::string &propertyName,
+    bool override) const {
   for (auto it = nodes.crbegin(); it != nodes.crend(); ++it) {
     std::vector<const Property *> values;
     for (auto it2 = it->second.cbegin(); it2 != it->second.cend(); ++it2) {
-      auto valsAtNode = (*it2)->getProperty(propertyName, locals);
+      auto valsAtNode = (*it2)->getProperty(propertyName);
       for (auto it3 = valsAtNode.cbegin(); it3 != valsAtNode.cend(); ++it3)
         if ((*it3)->override() == override)
           values.push_back(*it3);

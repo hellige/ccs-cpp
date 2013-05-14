@@ -63,12 +63,8 @@ TEST(ParserTest, UglyAbutments) {
   EXPECT_FALSE(parser.parse("foo {p = 'x'x = 2}"));
   EXPECT_TRUE(parser.parse("foo {p = 1 x = 2}"));
   EXPECT_TRUE(parser.parse("foo{p=1;x=2}"));
-  EXPECT_FALSE(parser.parse("foo{@localp=1}"));
-  EXPECT_TRUE(parser.parse("foo{@local p=1}"));
   EXPECT_FALSE(parser.parse("foo{@overridep=1}"));
-  EXPECT_FALSE(parser.parse("foo{@override@localp=1}"));
-  EXPECT_TRUE(parser.parse("foo{@override @local p=1}"));
-  EXPECT_TRUE(parser.parse("foo{@override /*hi*/ @local /*there*/ p=1}"));
+  EXPECT_TRUE(parser.parse("foo{@override /*hi*/ p=1}"));
   EXPECT_FALSE(parser.parse("@import'asdf'"));
   EXPECT_FALSE(parser.parse("@constrainasdf"));
   EXPECT_TRUE(parser.parse(

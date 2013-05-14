@@ -40,7 +40,7 @@ struct StringImportResolver : ccs::ImportResolver {
 
   explicit StringImportResolver(const std::string &ccs) : ccs(ccs) {}
 
-  virtual bool resolve(const std::string &location,
+  virtual bool resolve(const std::string &,
       std::function<bool(std::istream &)> load) {
     std::istringstream stream(ccs);
     return load(stream);

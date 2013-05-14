@@ -36,8 +36,8 @@ ifeq ($(system),Darwin)
 endif
 
 CXX = $(CCACHE) $(if $(GCC_HOME),$(GCC_HOME)/bin/,)g++ 
-CFLAGS = -std=gnu++0x -ggdb -O2 -Wall -fdiagnostics-show-option \
-  $(PLATCFLAGS) $(INCLUDES)
+CFLAGS = -std=gnu++0x -ggdb -O2 -Wall -Wextra -Werror \
+  -fdiagnostics-show-option $(PLATCFLAGS) $(INCLUDES)
 AR = ar rcu
 RANLIB = ranlib
 RM = rm -f

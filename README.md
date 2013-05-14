@@ -27,6 +27,13 @@ and strings.
 _name_ may be enclosed in quotes and written as a string literal if it
 contains spaces or other non-identifier characters.
 
+#### @override name = 123
+
+Overriding property definition. For a given property, any definition marked
+_@override_ will take precedence over any normal definition, regardless of
+the relative specificities of the two definitions. If more than one
+_@override_ definition applies in a particular context, the most specific wins.
+
 #### 'VAR: ${VAR}' <br> "literal: \${VAR}"
 
 Strings may be enclosed in single or double quotes. Environment variables may

@@ -22,8 +22,8 @@ struct StdErrLogger : public CcsLogger {
 StdErrLogger StdErrLogger;
 
 struct NoImportResolver : public ImportResolver {
-  virtual bool resolve(const std::string &location,
-      std::function<bool(std::istream &)> load) {
+  virtual bool resolve(const std::string &,
+      std::function<bool(std::istream &)>) {
     return false;
   }
 };

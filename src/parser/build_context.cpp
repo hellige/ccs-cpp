@@ -78,7 +78,7 @@ void BuildContext::addProperty(const ast::PropDef &propDef) {
   Value value(propDef.value_);
   value.setName(propDef.name_);
   node().addProperty(propDef.name_, Property(value,
-      propDef.origin_, dag_.nextProperty(), propDef.override_), propDef.local_);
+      propDef.origin_, dag_.nextProperty(), propDef.override_));
 }
 
 }

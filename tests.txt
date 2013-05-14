@@ -18,6 +18,14 @@ b a: frob = nitz
 
 Best before closest
 ---
+first.id: test = "correct"
+first second: test = "incorrect"
+---
+first.id second: test = correct
+===
+
+ID match has greater specificisty
+---
 second.id: test = "correct"
 first second: test = "incorrect"
 ---
@@ -56,7 +64,7 @@ Disjunction specificities
 ---
 a > b, a > b > y.d { test = 'correct1' }
 x.c { test = 'correct2' }
-f.f > h, g > h { test = 'correct3' }
+a f.f > h b, g > h { test = 'correct3' }
 h.k { test = 'incorrect' }
 ---
 a b: test = correct1
@@ -102,34 +110,24 @@ a: test = "top"
 a { b >: test = "bottom" }
 
 test2 = "top"
-a > { b { c > { d { e: @local test2 = "bottom" }}}}
+a > { b { c > { d { e: test2 = "bottom" }}}}
 ---
 b a: test = bottom
 b a e c b d: test2 = bottom
-===
-
-Local beats heritable
----
-a {
-  @local test = 'local';
-  test = 'heritable';
-}
----
-a: test = local
-a b: test = heritable
+b a e c d: test2 = top
 ===
 
 Order-dependent disjunction
 ---
 a, b, d { x = 1 }
 b { x = 2 }
-c { x = 2 }
+c { x = 3 }
 
 (d, e) > f { y = 1 }
 d > f { y = 2 }
 ---
 b: x = 2
-a c d: x = 1
+a c d: x = 3
 d f: y = 2
 ===
 
@@ -186,3 +184,18 @@ c: test = "correct"
 a.b: test = correct
 ===
 
+Specific vs lowest
+---
+a.b c: test = "correct"
+d: test = "incorrect"
+---
+a.b c d: test = correct
+===
+
+Specific vs lowest 2
+---
+a.b: test = "correct"
+c: test = "incorrect"
+---
+a.b c d: test = correct
+===

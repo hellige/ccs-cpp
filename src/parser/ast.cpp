@@ -33,9 +33,9 @@ struct ImportVisitor : public boost::static_visitor<bool> {
   ImportVisitor(ImportResolver &importResolver, Loader &loader,
       std::vector<std::string> &inProgress) :
     resolver(importResolver), loader(loader), inProgress(inProgress) {}
-  bool operator()(PropDef &propDef) const
+  bool operator()(PropDef &) const
     { return true; }
-  bool operator()(Constraint &constraint) const
+  bool operator()(Constraint &) const
     { return true; }
   bool operator()(Nested &nested) const
     { return nested.resolveImports(resolver, loader, inProgress); }
@@ -150,6 +150,7 @@ public:
 SelectorBranch::P SelectorBranch::descendant(SelectorLeaf::P first) {
   return std::make_shared<BranchImpl>(first, [](SelectorLeaf &first,
               BuildContext::P context, BuildContext::P baseContext) {
+    (void)baseContext;
     return context->descendant(context->traverse(first));
   });
 }

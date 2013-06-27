@@ -138,16 +138,22 @@ void SearchState::setTallyState(const AndTally *tally,
   loc = state;
 }
 
-std::ostream &operator<<(std::ostream &out, const SearchState &state) {
-  if (state.parent) {
-    if (state.parent->parent) {
-      out << *state.parent << " > " << state.key;
-    } else {
-      out << state.key;
-    }
-  } else {
+void SearchState::append(std::ostream &out, bool isPrefix) const {
+  if (parent) {
+    parent->append(out, isPrefix || !key.empty());
+  } else if (key.empty() && !isPrefix) {
     out << "<root>";
+    return;
   }
+
+  if (!key.empty()) {
+    out << key;
+    if (isPrefix) out << " > ";
+  }
+}
+
+std::ostream &operator<<(std::ostream &out, const SearchState &state) {
+  state.append(out, false);
   return out;
 }
 

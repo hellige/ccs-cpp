@@ -85,6 +85,7 @@ private:
       bool override) const;
 
   friend std::ostream &operator<<(std::ostream &, const SearchState &);
+  void append(std::ostream &out, bool isPrefix) const;
 };
 
 }

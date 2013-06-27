@@ -31,6 +31,8 @@ public:
 
   const Specificity &specificity() const { return specificity_; }
 
+  bool empty() const { return values_.empty(); }
+
   bool operator<(const Key &that) const
     { return values_ < that.values_; }
 

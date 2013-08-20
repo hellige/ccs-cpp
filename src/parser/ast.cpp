@@ -55,6 +55,12 @@ struct ImportVisitor : public boost::static_visitor<bool> {
             this->resolver, this->inProgress, import.ast);
       });
       inProgress.pop_back();
+      if (!result) {
+        std::ostringstream msg;
+        msg << "Failed to resolve '" << import.location
+          << "'! (User-provided resolver returned false.)";
+        loader.logger().error(msg.str());
+      }
     }
     return result;
   }

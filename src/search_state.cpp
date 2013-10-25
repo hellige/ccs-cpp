@@ -13,7 +13,6 @@ namespace ccs {
 SearchState::SearchState(const std::shared_ptr<const SearchState> &parent,
     const Key &key) :
       parent(parent),
-      nodes(parent->nodes), // TODO new hotness
       log(parent->log),
       key(key),
       logAccesses(parent->logAccesses),
@@ -56,17 +55,14 @@ std::shared_ptr<SearchState> SearchState::newChild(
 
 bool SearchState::extendWith(const SearchState &priorState) {
   constraintsChanged = false;
-  for (auto it = priorState.nodes.crbegin(); it != priorState.nodes.crend();
-        ++it)
-      for (auto it2 = it->second.cbegin(); it2 != it->second.cend(); ++it2)
-          (*it2)->getChildren(key, it->first, *this);
+  for (auto it = priorState.nodes.cbegin(); it != priorState.nodes.cend(); ++it)
+        it->first->getChildren(key, it->second, *this);
   return constraintsChanged;
 }
 
 const CcsProperty *SearchState::findProperty(const std::string &propertyName)
     const {
-  const CcsProperty *prop = doSearch(propertyName, true);
-  if (!prop) prop = doSearch(propertyName, false);
+  const CcsProperty *prop = doSearch(propertyName);
   if (logAccesses) {
     std::ostringstream msg;
     if (prop) {
@@ -94,34 +90,32 @@ void origins(std::ostream &str, const std::vector<const Property *> &values) {
 
 }
 
-const CcsProperty *SearchState::doSearch(const std::string &propertyName,
-    bool override) const {
-  for (auto it = nodes.crbegin(); it != nodes.crend(); ++it) {
-    std::vector<const Property *> values;
-    for (auto it2 = it->second.cbegin(); it2 != it->second.cend(); ++it2) {
-      auto valsAtNode = (*it2)->getProperty(propertyName);
-      for (auto it3 = valsAtNode.cbegin(); it3 != valsAtNode.cend(); ++it3)
-        if ((*it3)->override() == override)
-          values.push_back(*it3);
-    }
-    if (values.size() == 1)
-      return values[0];
-    else if (values.size() > 1) {
-      std::sort(values.begin(), values.end(),
-          [](const Property *l, const Property *r) {
-        return l->propertyNumber() < r->propertyNumber();
-      });
-      std::ostringstream msg;
-      msg << "Conflict detected for property '" << propertyName
-         << "' in context [" << *this << "]. "
-         << "(Conflicting settings at: [";
-      origins(msg, values);
-      msg << "].) Using most recent value.";
-      log.warn(msg.str());
-      return values.back();
-    }
+const CcsProperty *SearchState::doSearch(const std::string &propertyName)
+    const {
+  auto it = properties.find(propertyName);
+  if (it == properties.end()) {
+    if (parent) return parent->doSearch(propertyName);
+    return NULL;
   }
-  return NULL;
+
+  if (it->second.values.size() == 1)
+    return it->second.values[0];
+
+  // it->second.values.size() > 1
+  std::vector<const Property *> values(it->second.values.begin(),
+      it->second.values.end());
+  std::sort(values.begin(), values.end(),
+      [](const Property *l, const Property *r) {
+    return l->propertyNumber() < r->propertyNumber();
+  });
+  std::ostringstream msg;
+  msg << "Conflict detected for property '" << propertyName
+      << "' in context [" << *this << "]. "
+      << "(Conflicting settings at: [";
+  origins(msg, values);
+  msg << "].) Using most recent value.";
+  log.warn(msg.str());
+  return values.back();
 }
 
 const TallyState *SearchState::getTallyState(const AndTally *tally) const {

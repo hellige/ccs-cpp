@@ -199,3 +199,32 @@ c: test = "incorrect"
 ---
 a.b c d: test = correct
 ===
+
+Multiple chained constraints and conjunction
+---
+test = "wrong"
+a: @constrain b
+a b: @constrain c
+a b c: test = "right"
+---
+a: test = right
+===
+
+Bogus conflicts
+---
+a: @constrain b
+a: @constrain c
+a: test2 = "right"
+---
+a: test2 = right
+===
+
+Multiple chained constraints at root
+---
+@constrain a
+a: @constrain b
+a b: @constrain c
+a b c: test = "right"
+---
+test = right
+===

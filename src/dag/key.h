@@ -13,7 +13,7 @@
 namespace ccs {
 
 class Key {
-  std::map<std::string, std::set<std::string>> values_; // TODO ordering for deterministic log/test
+  std::map<std::string, std::set<std::string>> values_;
   Specificity specificity_;
 
 public:

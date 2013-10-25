@@ -101,7 +101,7 @@ struct ccs_grammar : qi::grammar<Iterator, ast::Nested(), qi::rule<Iterator>> {
 
     interpolant = "${" > +char_("A-Za-z0-9_") > '}';
     escape = lit('\\') >
-      (lit('$') [_val= '$'] |
+      (lit('$') [_val = '$'] |
        lit('\'') [_val = '\''] |
        lit('"') [_val = '"'] |
        lit('\\') [_val = '\\'] |

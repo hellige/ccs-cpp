@@ -9,6 +9,7 @@
 
 #include "ccs/domain.h"
 #include "dag/key.h"
+#include "dag/property.h"
 #include "dag/specificity.h"
 
 namespace ccs {
@@ -18,6 +19,24 @@ class CcsProperty;
 class Node;
 class TallyState;
 
+struct PropertySetting {
+    Specificity spec;
+    bool override;
+    std::vector<const Property *> values;
+
+    PropertySetting(Specificity spec, const Property *value)
+    : spec(spec),
+      override(value->override()) {
+      values.push_back(value);
+    }
+
+    bool better(const PropertySetting &that) const {
+      if (override && !that.override) return true;
+      if (!override && that.override) return false;
+      return that.spec < spec;
+    }
+};
+
 class SearchState {
   // we need to be sure to retain a reference to the root of the dag. the
   // simplest way is to just make everything in 'nodes' shared_ptrs, but that
@@ -26,10 +45,12 @@ class SearchState {
   // this is sufficient.
   std::shared_ptr<const Node> root;
   std::shared_ptr<const SearchState> parent;
-  std::map<Specificity, std::set<const Node *>> nodes;
+  std::map<const Node *, Specificity> nodes;
   // the TallyStates here should rightly be unique_ptrs, but gcc 4.5 can't
   // support that in a map. bummer.
   std::map<const AndTally *, const TallyState *> tallyMap;
+  // cache of properties newly set in this context
+  std::map<std::string, PropertySetting> properties;
   CcsLogger &log;
   Key key;
   bool logAccesses;
@@ -51,17 +72,67 @@ public:
 
   const CcsProperty *findProperty(const std::string &propertyName) const;
 
-  void add(Specificity spec, const Node *node)
-    { nodes[spec].insert(node); }
+  bool add(Specificity spec, const Node *node) {
+    auto pr = nodes.insert(std::make_pair(node, spec));
+
+    if (pr.second) return true;
+
+    auto &it = pr.first;
+    if (it->second < spec) {
+      it->second = spec;
+      return true;
+    }
+
+    return false;
+  }
 
   void constrain(const Key &constraints)
     { constraintsChanged |= key.addAll(constraints); }
 
+  void cacheProperty(const std::string &propertyName,
+      Specificity spec, const Property *property) {
+    auto it = properties.find(propertyName);
+
+    PropertySetting newSetting(spec, property);
+
+    if (it == properties.end()) {
+      // we don't have a local setting for this yet.
+      auto parentProperty = parent ? parent->checkCache(propertyName) : NULL;
+      if (parentProperty) {
+        if (parentProperty->better(newSetting))
+          // parent copy found, parent property better, leave local cache empty.
+          return;
+
+        // copy parent property into local cache
+        it = properties.insert(std::make_pair(propertyName, *parentProperty))
+            .first;
+      }
+    }
+
+    if (it == properties.end()) {
+      properties.insert(std::make_pair(propertyName, newSetting));
+    } else if (newSetting.better(it->second)) {
+      // new property better than local cache. replace.
+      it->second = newSetting;
+    } else if (it->second.better(newSetting)) {
+      // ignore
+    } else {
+      // new property has same specificity/override as existing... append.
+      it->second.values.push_back(property);
+    }
+  }
+
+  const PropertySetting *checkCache(const std::string &propertyName) const {
+    auto it = properties.find(propertyName);
+    if (it != properties.end()) return &it->second;
+    if (!parent) return NULL;
+    return parent->checkCache(propertyName);
+  }
+
   template <typename T>
   const CcsProperty *findProperty(const std::string &propertyName,
       T defaultVal) {
-    const CcsProperty *prop = doSearch(propertyName, true);
-    if (!prop) prop = doSearch(propertyName, false);
+    const CcsProperty *prop = doSearch(propertyName);
     if (logAccesses) {
       std::ostringstream msg;
       if (prop) {
@@ -81,8 +152,7 @@ public:
   void setTallyState(const AndTally *tally, const TallyState *state);
 
 private:
-  const CcsProperty *doSearch(const std::string &propertyName,
-      bool override) const;
+  const CcsProperty *doSearch(const std::string &propertyName) const;
 
   friend std::ostream &operator<<(std::ostream &, const SearchState &);
   void append(std::ostream &out, bool isPrefix) const;

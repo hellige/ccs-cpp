@@ -25,7 +25,7 @@ public:
   Node(const Node &) = delete;
   Node &operator=(const Node &) = delete;
 
-  const std::set<std::shared_ptr<Tally>> &tallies() { return tallies_; }
+  const std::set<std::shared_ptr<Tally>> &tallies() const { return tallies_; }
   void addTally(std::shared_ptr<Tally> tally) { tallies_.insert(tally); }
 
   Node &addChild(const Key &key) {
@@ -52,10 +52,13 @@ public:
   }
 
   void activate(const Specificity &spec, SearchState &searchState) const {
-    searchState.add(spec, this);
     searchState.constrain(constraints);
-    for (auto it = tallies_.begin(); it != tallies_.end(); ++it)
-      (*it)->activate(*this, spec, searchState);
+    if (searchState.add(spec, this)) {
+      for (auto it = props.begin(); it != props.end(); ++it)
+        searchState.cacheProperty(it->first, spec, &it->second);
+      for (auto it = tallies_.begin(); it != tallies_.end(); ++it)
+        (*it)->activate(*this, spec, searchState);
+    }
   }
 
   void addConstraint(const Key &key) {

@@ -22,12 +22,12 @@ class TallyState;
 struct PropertySetting {
     Specificity spec;
     bool override;
-    std::vector<const Property *> values;
+    std::set<const Property *> values;
 
     PropertySetting(Specificity spec, const Property *value)
     : spec(spec),
       override(value->override()) {
-      values.push_back(value);
+      values.insert(value);
     }
 
     bool better(const PropertySetting &that) const {
@@ -103,7 +103,8 @@ public:
           // parent copy found, parent property better, leave local cache empty.
           return;
 
-        // copy parent property into local cache
+        // copy parent property into local cache. this is done solely to
+        // support conflict detection.
         it = properties.insert(std::make_pair(propertyName, *parentProperty))
             .first;
       }
@@ -118,7 +119,7 @@ public:
       // ignore
     } else {
       // new property has same specificity/override as existing... append.
-      it->second.values.push_back(property);
+      it->second.values.insert(property);
     }
   }
 

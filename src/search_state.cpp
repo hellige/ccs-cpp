@@ -99,7 +99,7 @@ const CcsProperty *SearchState::doSearch(const std::string &propertyName)
   }
 
   if (it->second.values.size() == 1)
-    return it->second.values[0];
+    return *it->second.values.begin();
 
   // it->second.values.size() > 1
   std::vector<const Property *> values(it->second.values.begin(),

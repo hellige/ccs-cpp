@@ -35,6 +35,8 @@ TEST(CcsTest, Memory) {
   ASSERT_NO_THROW(EXPECT_EQ("nitz", ctx.getString("frob")));
 }
 
+namespace {
+
 struct StringImportResolver : ccs::ImportResolver {
   std::string ccs;
 
@@ -46,6 +48,8 @@ struct StringImportResolver : ccs::ImportResolver {
     return load(stream);
   }
 };
+
+}
 
 TEST(CcsTest, Import) {
   CcsDomain ccs;
@@ -131,12 +135,16 @@ TEST(CcsTest, SameStep) {
   CcsDomain ccs;
   std::istringstream input("a.b.c d.e: test = 'nope'; a.b.c/d.e: test = 'yep'");
   ccs.loadCcsStream(input, "<literal>", ImportResolver::None);
-  CcsContext ctx = ccs.build();
-  ctx = ctx.builder()
+  CcsContext root = ccs.build();
+  auto ctx = root.builder()
       .add("a", std::vector<std::string>{"b", "c"})
       .add("d", std::vector<std::string>{"e"})
       .build();
   EXPECT_EQ("yep", ctx.getString("test"));
+  ctx = root
+      .constrain("a", std::vector<std::string>{"b", "c"})
+      .constrain("d", std::vector<std::string>{"e"});
+  EXPECT_EQ("nope", ctx.getString("test"));
 }
 
 TEST(CcsTest, Interpolation) {
@@ -222,4 +230,26 @@ TEST(CcsTest, DefaultVals) {
   EXPECT_EQ(1, ctx.getInt("nope", 1));
   EXPECT_EQ("asdf", ctx.getString("nope", "asdf"));
   EXPECT_EQ(1.234, ctx.getDouble("nope", 1.234));
+}
+
+namespace {
+
+struct FailingLogger : ccs::CcsLogger {
+  virtual void info(const std::string &msg) { FAIL() << "info: " << msg; }
+  virtual void warn(const std::string &msg) { FAIL() << "warn: " << msg; }
+  virtual void error(const std::string &msg) { FAIL() << "error: " << msg; }
+};
+
+}
+
+TEST(CcsTest, FalseConflict) {
+  FailingLogger logger;
+  CcsDomain ccs(logger);
+  std::istringstream input("a b : foo = 'bar'");
+  ccs.loadCcsStream(input, "<literal>", ImportResolver::None);
+  CcsContext ctx = ccs.build();
+
+  EXPECT_EQ("bar", ctx.constrain("a").constrain("b").getString("foo"));
+  EXPECT_EQ("bar", ctx.constrain("a").constrain("b").constrain("a")
+      .getString("foo"));
 }

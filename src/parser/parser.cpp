@@ -116,7 +116,8 @@ struct ccs_grammar : qi::grammar<Iterator, ast::Nested(), qi::rule<Iterator>> {
         | qi::lexeme['"' >> *(interpolant | stringelem('"')) >> '"'];
 
     val = lit("0x") >> qi::hex [bind(&Value::setInt, _val, _1)]
-        | qi::long_long [bind(&Value::setInt, _val, _1)] >> !lit('.')
+        | qi::long_long [bind(&Value::setInt, _val, _1)]
+                         >> !(lit('.') | lit('e') | lit('E'))
         | qi::double_ [bind(&Value::setDouble, _val, _1)]
         | qi::bool_ [bind(&Value::setBool, _val, _1)]
         | strngval [bind(&Value::setString, _val, _1)];

@@ -1,0 +1,6 @@
+language: cpp
+compiler: gcc
+install:
+  - sudo apt-get install google-mock libboost-dev
+script:
+  - make all

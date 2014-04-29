@@ -7,6 +7,8 @@
 
 using namespace ccs;
 
+namespace {
+
 struct P {
   Parser parser;
   P() : parser(CcsLogger::StdErr) {}
@@ -15,7 +17,23 @@ struct P {
     ast::Nested ast;
     return parser.parseCcsStream("<literal>", str, ast);
   }
+
+  template<typename T>
+  bool parseAndReturnValue(const std::string &input, T &out) {
+    std::istringstream str(input);
+    ast::Nested ast;
+    if (!parser.parseCcsStream("<literal>", str, ast)) return false;
+    if (ast.rules_.size() != 1) return false;
+    ast::PropDef *propDef = boost::get<ast::PropDef>(&ast.rules_[0]);
+    if (!propDef) return false;
+    T *v = boost::get<T>(&propDef->value_.val_);
+    if (!v) return false;
+    out = *v;
+    return true;
+  }
 };
+
+}
 
 TEST(ParserTest, BasicPhrases) {
   P parser;
@@ -61,6 +79,7 @@ TEST(ParserTest, UglyAbutments) {
   P parser;
   EXPECT_FALSE(parser.parse("foo {p = 1x = 2}"));
   EXPECT_FALSE(parser.parse("foo {p = 'x'x = 2}"));
+  EXPECT_FALSE(parser.parse("value=12env.foo {}"));
   EXPECT_TRUE(parser.parse("foo {p = 1 x = 2}"));
   EXPECT_TRUE(parser.parse("foo{p=1;x=2}"));
   EXPECT_FALSE(parser.parse("foo{@overridep=1}"));
@@ -83,4 +102,43 @@ TEST(ParserTest, SelectorSections) {
 TEST(ParserTest, Constraints) {
   P parser;
   EXPECT_TRUE(parser.parse("a.b: @constrain a.c"));
+}
+
+
+TEST(ParserTest, ParsesIntegers) {
+  P parser;
+  int64_t v64 = 0;
+  ASSERT_TRUE(parser.parseAndReturnValue("value = 100", v64));
+  EXPECT_EQ(100, v64);
+  ASSERT_TRUE(parser.parseAndReturnValue("value = 0", v64));
+  EXPECT_EQ(0, v64);
+  ASSERT_TRUE(parser.parseAndReturnValue("value = -0", v64));
+  EXPECT_EQ(0, v64);
+  ASSERT_TRUE(parser.parseAndReturnValue("value = -100", v64));
+  EXPECT_EQ(-100, v64);
+  ASSERT_FALSE(parser.parseAndReturnValue("value = 100.123", v64));
+  ASSERT_FALSE(parser.parseAndReturnValue("value = '100", v64));
+}
+
+TEST(ParserTest, ParsesDoubles) {
+  P parser;
+  double vDouble = 0.0;
+  ASSERT_TRUE(parser.parseAndReturnValue("value = 100.", vDouble));
+  EXPECT_DOUBLE_EQ(100., vDouble);
+  ASSERT_TRUE(parser.parseAndReturnValue("value = 100.0000", vDouble));
+  EXPECT_DOUBLE_EQ(100., vDouble);
+  ASSERT_TRUE(parser.parseAndReturnValue("value = 0.0000", vDouble));
+  EXPECT_DOUBLE_EQ(0., vDouble);
+  ASSERT_TRUE(parser.parseAndReturnValue("value = -0.0000", vDouble));
+  EXPECT_DOUBLE_EQ(0., vDouble);
+  ASSERT_TRUE(parser.parseAndReturnValue("value = 1.0e-2", vDouble));
+  EXPECT_DOUBLE_EQ(0.01, vDouble);
+  ASSERT_TRUE(parser.parseAndReturnValue("value = 1.0E-2", vDouble));
+  EXPECT_DOUBLE_EQ(0.01, vDouble);
+  ASSERT_TRUE(parser.parseAndReturnValue("value = 1e-2", vDouble));
+  EXPECT_DOUBLE_EQ(0.01, vDouble);
+  ASSERT_TRUE(parser.parseAndReturnValue("value = 1E-2", vDouble));
+  EXPECT_DOUBLE_EQ(0.01, vDouble);
+  ASSERT_FALSE(parser.parseAndReturnValue("value = 100", vDouble));
+  ASSERT_FALSE(parser.parseAndReturnValue("value = '100.0", vDouble));
 }

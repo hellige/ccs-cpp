@@ -1,0 +1,12 @@
+language: cpp
+compiler: gcc
+before_install:
+  - sudo add-apt-repository ppa:boost-latest/ppa -y
+  - sudo apt-get update -qq
+install:
+  - sudo apt-get install google-mock boost1.55
+script:
+  - mkdir -p lib
+  - make -C lib -f /usr/share/doc/libgtest-dev/examples/make/Makefile gtest.a
+  - mv lib/gtest.a lib/libgtest.a
+  - make all

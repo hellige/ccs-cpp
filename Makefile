@@ -25,7 +25,7 @@ CP = cp -a
 system := $(shell uname)
 ifeq ($(system),Linux)
     PLATCFLAGS = -fpic
-    PLATLIBS = -lrt
+    PLATLIBS = -lrt -lpthread
     PLATLDFLAGS = -rdynamic
 endif
 ifeq ($(system),Darwin)
@@ -60,6 +60,11 @@ API_HC = $(patsubst $(API_DIR)/%.h,out/api/%.hc,$(API_INCS))
 TEST_O = $(patsubst $(TEST_DIR)/%.cpp,out/test/%.o,$(TEST_SRCS))
 ALL_O = $(MAIN_O) $(TEST_O)
 ALL_T = $(API_HC) $(MAIN_HC) $(LIB_A) $(LIB_SO) $(TEST_T)
+ifeq ($(shell which fig 2>&1 > /dev/null),)
+FIG = echo Fig not installed - skipping command: fig
+else
+FIG = fig
+endif
 FIG_MAIN = .fig_done_main
 FIG_TEST = .fig_done_test
 CP_INCLUDE = .headers_copied
@@ -72,10 +77,10 @@ default: all
 all: $(ALL_T) $(TESTS_PASSED) $(CP_INCLUDE) $(TARBALL)
 
 $(FIG_MAIN): package.fig
-	fig --log-level warn -m -c build && touch $@
+	$(FIG) --log-level warn -m -c build && touch $@
 
 $(FIG_TEST): package.fig $(LIB_SO)
-	fig --log-level warn -m -c test && touch $@
+	$(FIG) --log-level warn -m -c test && touch $@
 
 $(MAIN_O):out/main/%.o: $(MAIN_DIR)/%.cpp $(FIG_MAIN)
 	@mkdir -p $(dir $@)

@@ -25,7 +25,7 @@ CP = cp -a
 system := $(shell uname)
 ifeq ($(system),Linux)
     PLATCFLAGS = -fpic
-    PLATLIBS = -lrt
+    PLATLIBS = -lrt -lpthread
     PLATLDFLAGS = -rdynamic
 endif
 ifeq ($(system),Darwin)

@@ -7,5 +7,6 @@ install:
   - sudo apt-get install google-mock boost1.55
 script:
   - mkdir -p lib
-  - (cd lib && make gtest.a -f /usr/share/doc/libgtest-dev/examples/make/Makefile)
+  - make -C lib -f /usr/share/doc/libgtest-dev/examples/make/Makefile gtest.a
+  - mv lib/gtest.a lib/libgtest.a
   - make all

@@ -1,7 +1,7 @@
 " Vim syntax file
 " Language: CCS
 " Maintainer: Matt Hellige <matt@immute.net>, Matt Godbolt <matt@godbolt.org>
-" Last change: 2015 January 26
+" Last change: 2015 February 9th
 
 if exists("b:current_syntax")
     finish
@@ -14,7 +14,7 @@ syn match ccsError '@\w*'
 syn match ccsKeywords '@import\>' skipwhite nextgroup=ccsString
 syn match ccsKeywords '@constrain\>' skipwhite
 syn match ccsKeywords '@context\>' skipwhite nextgroup=ccsParens
-syn match ccsModifiers '@\(override|local\)\>' skipwhite
+syn match ccsModifiers '@override\>' skipwhite
 " needs to be high up as it is spectacularly oversensitive
 syn match ccsConstraint '\<\w\+\>'
 
@@ -65,6 +65,6 @@ hi def link ccsComment Comment
 hi def link ccsString Constant
 hi def link ccsNumber Constant
 hi def link ccsBoolean Constant
-hi def link ccsIdentifier Statement
+hi def link ccsIdentifier Identifier
 hi def link ccsOperator Operator
 hi def link ccsInterpolant PreProc

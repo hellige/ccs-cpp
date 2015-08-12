@@ -10,10 +10,11 @@ config default
 end
 
 config build
-  include boost/1.49.0.redhat5
+  include gcc/4.9.2-1
+  include boost/1.57.0-1-gcc4.9.2-1
 end
 
 config test
   include :build
-  include gmock/1.4.0
+  include gmock/1.7.0-2-gcc4.9.2-1
 end

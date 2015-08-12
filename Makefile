@@ -14,7 +14,15 @@ else
 endif
 
 export FIG_REMOTE_URL ?= ftp://devnas/Builds/Fig/repos
-LIB_PATH=$(if $(GCC_HOME),$(GCC_HOME)/lib64:,)lib
+export GCC_HOME := $(shell fig --log-level=warn --suppress-cleanup-of-retrieves -m -c build -g GCC_HOME)
+LIB_PATH=$(GCC_HOME)/lib64:lib
+
+GCC_MULTIARCH := $(shell gcc -print-multiarch 2>/dev/null)
+ifneq ($(GCC_MULTIARCH),)
+  export LIBRARY_PATH = /usr/lib/$(GCC_MULTIARCH)
+  export C_INCLUDE_PATH = /usr/include/$(GCC_MULTIARCH)
+  export CPLUS_INCLUDE_PATH = /usr/include/$(GCC_MULTIARCH)
+endif
 
 PLATCFLAGS =
 PLATLDFLAGS =
@@ -25,7 +33,7 @@ CP = cp -a
 system := $(shell uname)
 ifeq ($(system),Linux)
     PLATCFLAGS = -fpic
-    PLATLIBS = -lrt
+    PLATLIBS = -lrt -lpthread
     PLATLDFLAGS = -rdynamic
 endif
 ifeq ($(system),Darwin)

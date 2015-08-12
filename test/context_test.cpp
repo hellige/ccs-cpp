@@ -8,14 +8,6 @@
 
 using namespace ccs;
 
-namespace {
-
-std::vector<std::string> v(const std::string &s) {
-  return std::vector<std::string>{s};
-}
-
-}
-
 TEST(ContextTest, StringFormat) {
   CcsDomain ccs;
   std::istringstream input("b c : @constrain d.e");

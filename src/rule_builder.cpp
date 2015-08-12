@@ -17,7 +17,7 @@ struct RuleBuilder::Impl : std::enable_shared_from_this<Impl> {
     ast.addRule(def);
   }
 
-  void add(const ast::Nested &child) { ast.addRule(child); }
+  void add(const ast::Nested &child) { ast.addNested(child); }
   std::shared_ptr<Impl> select(const std::string &name,
       const std::vector<std::string> &values);
   virtual std::shared_ptr<Impl> &pop() = 0;

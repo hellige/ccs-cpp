@@ -9,20 +9,24 @@
 
 namespace ccs { namespace ast {
 
+AstRule::AstRule(const Import &i) : guts(std::make_shared<Import>(i)) {}
+AstRule::AstRule(const Nested &n) : guts(std::make_shared<Nested>(n)) {}
+
+
 struct AstVisitor : public boost::static_visitor<void> {
   BuildContext::P buildContext;
   BuildContext::P baseContext;
 
   AstVisitor(BuildContext::P buildContext, BuildContext::P baseContext) :
     buildContext(buildContext), baseContext(baseContext) {}
-  void operator()(Import &import) const
-    { import.ast.addTo(buildContext, baseContext); }
+  void operator()(std::shared_ptr<Import> &import) const
+    { import->ast.addTo(buildContext, baseContext); }
   void operator()(PropDef &propDef) const
     { buildContext->addProperty(propDef); }
   void operator()(Constraint &constraint) const
     { buildContext->node().addConstraint(constraint.key_); }
-  void operator()(Nested &nested) const
-    { nested.addTo(buildContext, baseContext); }
+  void operator()(std::shared_ptr<Nested> &nested) const
+    { nested->addTo(buildContext, baseContext); }
 };
 
 struct ImportVisitor : public boost::static_visitor<bool> {
@@ -37,10 +41,11 @@ struct ImportVisitor : public boost::static_visitor<bool> {
     { return true; }
   bool operator()(Constraint &) const
     { return true; }
-  bool operator()(Nested &nested) const
-    { return nested.resolveImports(resolver, loader, inProgress); }
+  bool operator()(std::shared_ptr<Nested> &nested) const
+    { return nested->resolveImports(resolver, loader, inProgress); }
 
-  bool operator()(Import &import) const {
+  bool operator()(std::shared_ptr<Import> &importPtr) const {
+    Import &import = *importPtr;
     bool result = false;
     if (std::find(inProgress.begin(), inProgress.end(), import.location) !=
         inProgress.end()) {
@@ -71,14 +76,14 @@ void Nested::addTo(BuildContext::P buildContext, BuildContext::P baseContext) {
   if (selector_)
     bc = selector_->traverse(buildContext, baseContext);
   for (auto it = rules_.begin(); it != rules_.end(); ++it)
-    boost::apply_visitor(AstVisitor(bc, baseContext), *it);
+    boost::apply_visitor(AstVisitor(bc, baseContext), it->guts);
 }
 
 bool Nested::resolveImports(ImportResolver &importResolver, Loader &loader,
     std::vector<std::string> &inProgress) {
   for (auto it = rules_.begin(); it != rules_.end(); ++it)
     if (!boost::apply_visitor(ImportVisitor(importResolver, loader, inProgress),
-        *it))
+        it->guts))
       return false;
   return true;
 }

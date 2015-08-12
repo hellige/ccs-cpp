@@ -61,22 +61,22 @@ struct ccs_grammar : qi::grammar<Iterator, ast::Nested(), qi::rule<Iterator>> {
   qi::rule<I, string(char)> stringelem;
   qi::rule<I, void(ast::PropDef &)> modifiers;
   qi::rule<I, Value()> val;
-  qi::rule<I, ast::PropDef(), typeof(skipper)> property;
-  qi::rule<I, ast::SelectorBranch::P(), typeof(skipper)> selector;
+  qi::rule<I, ast::PropDef(), decltype(skipper)> property;
+  qi::rule<I, ast::SelectorBranch::P(), decltype(skipper)> selector;
   qi::rule<I, void(Key &, const string &)> vals;
   qi::rule<I, void(Key &), qi::locals<string>> singlestep;
   qi::rule<I, void(Key &)> stepsuffix;
-  qi::rule<I, ast::SelectorLeaf::P(), typeof(skipper), qi::locals<Key>> step;
-  qi::rule<I, ast::SelectorLeaf::P(), typeof(skipper)> term;
-  qi::rule<I, ast::SelectorLeaf::P(), typeof(skipper)> product;
-  qi::rule<I, ast::SelectorLeaf::P(), typeof(skipper)> sum;
+  qi::rule<I, ast::SelectorLeaf::P(), decltype(skipper), qi::locals<Key>> step;
+  qi::rule<I, ast::SelectorLeaf::P(), decltype(skipper)> term;
+  qi::rule<I, ast::SelectorLeaf::P(), decltype(skipper)> product;
+  qi::rule<I, ast::SelectorLeaf::P(), decltype(skipper)> sum;
 
-  qi::rule<I, ast::Import(), typeof(skipper)> import;
-  qi::rule<I, ast::Constraint(), typeof(skipper)> constraint;
-  qi::rule<I, ast::Nested(), typeof(skipper)> nested;
-  qi::rule<I, ast::AstRule(), typeof(skipper)> rulebody;
+  qi::rule<I, ast::Import(), decltype(skipper)> import;
+  qi::rule<I, ast::Constraint(), decltype(skipper)> constraint;
+  qi::rule<I, ast::Nested(), decltype(skipper)> nested;
+  qi::rule<I, ast::AstRule(), decltype(skipper)> rulebody;
   qi::rule<I, ast::AstRule()> rule;
-  qi::rule<I, ast::Nested(), typeof(skipper)> ruleset;
+  qi::rule<I, ast::Nested(), decltype(skipper)> ruleset;
 
   ccs_grammar() : ccs_grammar::base_type(ruleset, "CCS") {
     using qi::lit;

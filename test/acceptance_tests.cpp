@@ -88,7 +88,7 @@ public:
     boost::spirit::istream_iterator iter(stream);
     boost::spirit::istream_iterator end;
 
-    grammar<typeof(iter)> grammar;
+    grammar<decltype(iter)> grammar;
     std::vector<CcsTestCase> result;
     bool r = qi::parse(iter, end, grammar, result);
 

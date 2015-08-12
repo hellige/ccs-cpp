@@ -38,12 +38,25 @@ struct Constraint {
 struct Import;
 struct Nested;
 
+struct AstRule {
 typedef boost::variant<
     PropDef,
     Constraint,
-    boost::recursive_wrapper<Import>,
-    boost::recursive_wrapper<Nested>>
-  AstRule;
+    std::shared_ptr<Import>,
+    std::shared_ptr<Nested>>
+  Guts;
+
+  Guts guts;
+
+  AstRule() {}
+  AstRule(const PropDef &p) : guts(p) {}
+  AstRule(const Constraint &c) : guts(c) {}
+  AstRule(const Import &i);
+  AstRule(const Nested &n);
+
+  AstRule(const AstRule &) = default;
+  AstRule &operator=(const AstRule &) = default;
+};
 
 
 struct SelectorLeaf {
@@ -78,11 +91,20 @@ struct SelectorBranch {
 };
 
 
-struct Nested {
+struct Nested : boost::static_visitor<void> {
   std::shared_ptr<SelectorBranch> selector_;
   std::vector<AstRule> rules_;
 
-  void addRule(const AstRule &rule) { rules_.push_back(rule); }
+  void operator()(const Import &i) { rules_.push_back(AstRule(i)); }
+  void operator()(const PropDef &p) { rules_.push_back(AstRule(p)); }
+  void operator()(const Constraint &c) { rules_.push_back(AstRule(c)); }
+
+  void addRule(const boost::variant<ccs::ast::Import, ccs::ast::Constraint,
+       ccs::ast::PropDef> &rule) {
+    boost::apply_visitor(*this, rule);
+  }
+
+  void addNested(const Nested &rule) { rules_.push_back(AstRule(rule)); }
   void addTo(std::shared_ptr<BuildContext> buildContext,
       std::shared_ptr<BuildContext> baseContext);
   bool resolveImports(ImportResolver &importResolver, Loader &loader,

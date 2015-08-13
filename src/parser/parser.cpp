@@ -160,7 +160,9 @@ struct ccs_grammar : qi::grammar<Iterator, ast::Nested(), qi::rule<Iterator>> {
     rulebody = import | constraint | property | nested;
     rule = qi::skip(skipper.alias())[rulebody] >>
         ((+skipper || lit(';')) | &lit('}') | eoi);
-    auto context = lit("@context") > '(' > selector > ')' > -lit(';');
+    // cf http://stackoverflow.com/questions/20763665/boost-spirit-v2-qi-bug-associated-with-optimization-level/20766909#20766909
+    const auto context = boost::proto::deep_copy(
+        lit("@context") > '(' > selector > ')' > -lit(';'));
     ruleset %= -context > *rule > eoi;
   }
 

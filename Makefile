@@ -60,7 +60,7 @@ API_HC = $(patsubst $(API_DIR)/%.h,out/api/%.hc,$(API_INCS))
 TEST_O = $(patsubst $(TEST_DIR)/%.cpp,out/test/%.o,$(TEST_SRCS))
 ALL_O = $(MAIN_O) $(TEST_O)
 ALL_T = $(API_HC) $(MAIN_HC) $(LIB_A) $(LIB_SO) $(TEST_T)
-ifeq ($(shell which fig 2>&1 > /dev/null),)
+ifeq ($(shell which fig),)
 FIG = echo Fig not installed - skipping command: fig
 else
 FIG = fig

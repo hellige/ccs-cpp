@@ -14,8 +14,14 @@ else
 endif
 
 export FIG_REMOTE_URL ?= ftp://devnas/Builds/Fig/repos
-export GCC_HOME := $(shell fig --log-level=warn --suppress-cleanup-of-retrieves -m -c build -g GCC_HOME)
+ifeq ($(shell which fig),)
+FIG = echo Fig not installed - skipping command: fig
+else
+GCC_VERSION ?= 4.9.2-1
+FIG=sed 's/%(gcc_version)/${GCC_VERSION}/g' package.fig | fig --file -
+export GCC_HOME := $(shell $(FIG) --log-level=warn --suppress-cleanup-of-retrieves -m -c build -g GCC_HOME)
 LIB_PATH=$(GCC_HOME)/lib64:lib
+endif
 
 GCC_MULTIARCH := $(shell gcc -print-multiarch 2>/dev/null)
 ifneq ($(GCC_MULTIARCH),)
@@ -68,11 +74,6 @@ API_HC = $(patsubst $(API_DIR)/%.h,out/api/%.hc,$(API_INCS))
 TEST_O = $(patsubst $(TEST_DIR)/%.cpp,out/test/%.o,$(TEST_SRCS))
 ALL_O = $(MAIN_O) $(TEST_O)
 ALL_T = $(API_HC) $(MAIN_HC) $(LIB_A) $(LIB_SO) $(TEST_T)
-ifeq ($(shell which fig),)
-FIG = echo Fig not installed - skipping command: fig
-else
-FIG = fig
-endif
 FIG_MAIN = .fig_done_main
 FIG_TEST = .fig_done_test
 CP_INCLUDE = .headers_copied
@@ -138,7 +139,7 @@ $(TESTS_PASSED): $(TEST_T) tests.txt
 	
 publish: $(TARBALL)
 	if [ -z "$$PROJECT_VERSION" ]; then exit 1; fi
-	fig --publish $(FIG_NAME)/$(PROJECT_VERSION)
+	$(FIG) --publish $(FIG_NAME)/$(PROJECT_VERSION)-gcc$(GCC_VERSION)
 
 clean:
 	-$(RM) $(ALL_T) $(ALL_O)

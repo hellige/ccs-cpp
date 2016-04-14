@@ -7,7 +7,7 @@ There's a presentation about the language [here][2], but it's a little sketchy
 without someone talking along with it.
 
 [1]: http://github.com/hellige/ccs
-[1]: http://hellige.github.io/ccs
+[2]: http://hellige.github.io/ccs
 
 Syntax quick reference
 ----------------------

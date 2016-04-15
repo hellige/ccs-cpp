@@ -195,7 +195,7 @@ struct Parser::Impl {
 Parser::Parser(CcsLogger &log) : log(log), impl(new Impl()) {}
 Parser::~Parser() {}
 
-bool Parser::parseCcsStream(const std::string &fileName, std::istream &stream,
+bool Parser::parseCcsStreamDEAD(const std::string &fileName, std::istream &stream,
     ast::Nested &ast) {
   stream.unsetf(std::ios::skipws);
 

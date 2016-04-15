@@ -1,0 +1,38 @@
+terminals are in CAPS or 'single-quotes' below.
+
+ruleset    ::= ('@context' '(' selector ')') ';'?)? rules
+             | rules
+rules      ::= rule rules
+
+// when parsing rule, the ambiguity is between ident as start of prule and
+// ident as start of selector... '=' can be used to disambiguate.
+rule       ::= prule ';'?
+             | selector ':' prule ';'?
+             | selector '{' rules '}'
+prule      ::= '@import' STRING
+             | '@constrain' singlestep
+             | '@override'? ident '=' val
+
+// stratified precedence...
+selector   ::= sum '>'?
+sum        ::= product (',' product)*
+// term* starts with ident or '(', which is enough to disambiguate...
+product    ::= term term*
+// here we have to distinguish another step from a trailing '>'. again,
+// peeking for ident or '(' does the trick.
+term       ::= step ('>' step)*
+step       ::= singlestep
+             | '(' sum ')'
+singlestep ::= ident ('.' ident)* ('/' singlestep)?
+
+ident      ::= ID | STRING
+val        ::= INT | DOUBLE | BOOL | STRING
+
+
+// without precedence...
+selector   ::= sel '>'?
+step       ::= step op step
+             | singlestep step
+             | singlestep
+             | '(' step ')'
+op         ::= ',' | '>'

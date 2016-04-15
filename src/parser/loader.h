@@ -5,7 +5,7 @@
 #include <string>
 
 #include "parser/ast.h"
-#include "parser/parser.h"
+#include "parser/parser2.h"
 #include "dag/dag_builder.h"
 
 namespace ccs {
@@ -32,7 +32,7 @@ public:
   bool parseCcsStream(std::istream &stream, const std::string &fileName,
       ImportResolver &importResolver, std::vector<std::string> &inProgress,
       ast::Nested &ast) {
-    Parser parser(log);
+    Parser2 parser(log);
     if (!parser.parseCcsStream(fileName, stream, ast)) return false;
     if (!ast.resolveImports(importResolver, *this, inProgress)) return false;
     return true;

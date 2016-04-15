@@ -21,7 +21,7 @@ public:
   Parser(CcsLogger &log);
   ~Parser();
 
-  bool parseCcsStream(const std::string &fileName, std::istream &stream,
+  bool parseCcsStreamDEAD(const std::string &fileName, std::istream &stream,
       ast::Nested &ast);
 };
 

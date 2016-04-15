@@ -33,6 +33,8 @@ struct PropDef {
 
 struct Constraint {
   Key key_;
+  Constraint() {} // TODO delete? old parser?
+  explicit Constraint(const Key &key) : key_(key) {}
 };
 
 struct Import;
@@ -51,6 +53,7 @@ struct SelectorLeaf {
   virtual ~SelectorLeaf() {};
   virtual Node &traverse(std::shared_ptr<BuildContext> context) = 0;
 
+  // TODO these shouldn't be needed anymore?
   static P desc(P left, P right)
     { return left->descendant(left, right); }
   static P conj(P left, P right)
@@ -92,6 +95,9 @@ struct Nested {
 struct Import {
   std::string location;
   Nested ast;
+
+  Import() {} // TODO delete? old parser?
+  explicit Import(const std::string &location) : location(location) {}
 };
 
 }}

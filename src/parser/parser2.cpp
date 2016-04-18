@@ -20,6 +20,7 @@ struct Token {
 
   Type type;
   std::string value;
+  StringVal stringValue;
   int64_t intValue; // only valid in case of ints...
   double doubleValue; // only valid in case of numbers...
 
@@ -163,7 +164,6 @@ private:
   }
 
   bool identInitChar(int c) {
-    if (c == EOF) return false;
     if (c == '$') return true;
     if (c == '_') return true;
     if ('A' <= c && c <= 'Z') return true;
@@ -172,49 +172,77 @@ private:
   }
 
   bool identChar(int c) {
-    if (c == EOF) return false;
     if (identInitChar(c)) return true;
     if ('0' <= c && c <= '9') return true;
     return false;
   }
 
+  bool interpolantChar(int c) {
+    if (c == '_') return true;
+    if ('0' <= c && c <= '9') return true;
+    if ('A' <= c && c <= 'Z') return true;
+    if ('a' <= c && c <= 'z') return true;
+    return false;
+  }
+
   Token string(char first) {
-    std::string result;
+    StringVal result;
+    std::string current;
     while (stream_.peek() != first) {
       switch (stream_.peek()) {
       case EOF:
         throw std::runtime_error("BAD EOF 1"); // TODO error
+      case '$': {
+        stream_.get();
+        if (stream_.peek() != '{')
+          throw std::runtime_error("EXPECTED {"); // TODO error
+        stream_.get();
+        if (!current.empty()) result.elements_.push_back(current);
+        current = "";
+        Interpolant interpolant;
+        while (stream_.peek() != '}') {
+          if (!interpolantChar(stream_.peek()))
+              throw std::runtime_error("BAD INTERPOLANT CHAR"); // TODO error
+          interpolant.name += stream_.get();
+        }
+        stream_.get();
+        result.elements_.push_back(interpolant);
+        break;
+      }
       case '\\': {
         stream_.get();
         auto escape = stream_.get();
         switch (escape) {
           case EOF: throw std::runtime_error("BAD EOF 2"); // TODO error
-          case '$': result += '$'; break;
-          case '\'': result += '\''; break;
-          case '"': result += '"'; break;
-          case '\\': result += '\\'; break;
-          case 't': result += '\t'; break;
-          case 'n': result += '\n'; break;
-          case 'r': result += '\r'; break;
+          case '$': current += '$'; break;
+          case '\'': current += '\''; break;
+          case '"': current += '"'; break;
+          case '\\': current += '\\'; break;
+          case 't': current += '\t'; break;
+          case 'n': current += '\n'; break;
+          case 'r': current += '\r'; break;
           case '\n': break; // escaped newline: ignore
           default: std::cerr << "ESC " << escape << std::endl; throw std::runtime_error("BAD ESCAPE"); // TODO error
         }
         break;
       }
       default:
-        result += (char)stream_.get();
+        current += (char)stream_.get();
         break;
       }
     }
     stream_.get();
-    return Token(Token::STRING, result);
+    if (!current.empty()) result.elements_.push_back(current);
+    auto tok = Token(Token::STRING);
+    tok.stringValue = result;
+    return tok;
   }
 
   bool numberChar(int c) {
-    if (c == EOF) return false;
     if ('0' <= c && c <= '9') return true;
     if (c == '-' || c == '.') return true;
     if (c == 'e' || c == 'E') return true;
+    if (identInitChar(c)) return true; // TODO this isn't really right, see below...
     return false;
   }
 
@@ -231,7 +259,11 @@ private:
 
     Token token(Token::DOUBLE, first);
     while (numberChar(stream_.peek())) token.append(stream_.get());
-    token.doubleValue = boost::lexical_cast<double>(token.value);
+    try {
+      token.doubleValue = boost::lexical_cast<double>(token.value);
+    } catch (const std::bad_cast &e) {
+      throw std::runtime_error("BAD DOUBLE"); // TODO error
+    }
     if (round(token.doubleValue) == token.doubleValue) {
       token.type = Token::INT;
       token.intValue = round(token.doubleValue);
@@ -339,7 +371,10 @@ private:
     switch (cur_.type) {
     case Token::IMPORT:
       advance();
-      expect(Token::STRING); ast.addRule(ast::Import(last_.value));
+      expect(Token::STRING);
+      if (last_.stringValue.interpolation())
+        throw std::runtime_error("INTERPOLATION NOT ALLOWED HERE");
+      ast.addRule(ast::Import(last_.stringValue.str()));
       return true;
     case Token::CONSTRAIN:
       advance();
@@ -374,7 +409,7 @@ private:
     case Token::DOUBLE:
       prop.value_.setDouble(cur_.doubleValue); break;
     case Token::STRING:
-      prop.value_.setString(StringVal(cur_.value)); break; // TODO interpolation
+      prop.value_.setString(cur_.stringValue); break;
     case Token::IDENT:
       // TODO deal with num+literal stuff?
       if (cur_.value == "true") prop.value_.setBool(true);
@@ -458,7 +493,11 @@ private:
 
   std::string parseIdent() {
     if (advanceIf(Token::IDENT)) return last_.value;
-    if (advanceIf(Token::STRING)) return last_.value;
+    if (advanceIf(Token::STRING)) {
+      if (last_.stringValue.interpolation())
+        throw std::runtime_error("INTERPOLATION NOT ALLOWED HERE");
+      return last_.stringValue.str();
+    }
     throw std::runtime_error("TODO 5"); // TODO error
   }
 };
@@ -484,7 +523,6 @@ bool Parser2::parseCcsStream(const std::string &fileName, std::istream &stream,
     msg << "Parse error: " << e.what();
     log.error(msg.str());
   }
-
   return false;
 }
 

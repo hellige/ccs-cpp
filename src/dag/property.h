@@ -27,6 +27,12 @@ struct StringVal {
     elements_.push_back(str);
   }
   std::string str() const;
+
+  bool interpolation() const {
+    if (elements_.size() > 1) return true;
+    if (boost::get<Interpolant>(&elements_.front())) return true;
+    return false;
+  }
 };
 
 struct Value {

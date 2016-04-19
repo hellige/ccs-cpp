@@ -94,6 +94,7 @@ TEST(ParserTest, UglyAbutments) {
   EXPECT_TRUE(parser.parse(
       "@import 'asdf' \n ; \n @constrain asdf \n ; @import 'foo'  "));
   EXPECT_TRUE(parser.parse("@import /*hi*/ 'asdf'"));
+  EXPECT_TRUE(parser.parse("env.foo/* some comment */{ }"));
 }
 
 TEST(ParserTest, SelectorSections) {

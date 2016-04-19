@@ -222,7 +222,7 @@ private:
           case 'n': current += '\n'; break;
           case 'r': current += '\r'; break;
           case '\n': break; // escaped newline: ignore
-          default: std::cerr << "ESC " << escape << std::endl; throw std::runtime_error("BAD ESCAPE"); // TODO error
+          default: throw std::runtime_error("BAD ESCAPE"); // TODO error
         }
         break;
       }

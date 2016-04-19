@@ -81,13 +81,15 @@ TEST(ParserTest, Comments) {
 TEST(ParserTest, UglyAbutments) {
   P parser;
   EXPECT_FALSE(parser.parse("foo {p = 1x = 2}"));
-  EXPECT_FALSE(parser.parse("foo {p = 'x'x = 2}"));
+  EXPECT_TRUE(parser.parse("foo {p = 1x p2 = 2}"));
+  EXPECT_TRUE(parser.parse("foo {p = 'x'x = 2}"));
   EXPECT_FALSE(parser.parse("value=12asdf.foo {}"));
+  EXPECT_TRUE(parser.parse("value=12asdf.foo nextsel {}"));
   EXPECT_TRUE(parser.parse("foo {p = 1 x = 2}"));
   EXPECT_TRUE(parser.parse("foo{p=1;x=2}"));
   EXPECT_FALSE(parser.parse("foo{@overridep=1}"));
   EXPECT_TRUE(parser.parse("foo{@override /*hi*/ p=1}"));
-  EXPECT_FALSE(parser.parse("@import'asdf'"));
+  EXPECT_TRUE(parser.parse("@import'asdf'"));
   EXPECT_FALSE(parser.parse("@constrainasdf"));
   EXPECT_TRUE(parser.parse(
       "@import 'asdf' \n ; \n @constrain asdf \n ; @import 'foo'  "));
@@ -132,15 +134,14 @@ TEST(ParserTest, ParsesIntegers) {
 TEST(ParserTest, ParsesDoubles) {
   P parser;
   double vDouble = 0.0;
-  // TODO either fix lexer to really distinguish or whatever...
-//  ASSERT_TRUE(parser.parseAndReturnValue("value = 100.", vDouble));
-//  EXPECT_DOUBLE_EQ(100., vDouble);
-//  ASSERT_TRUE(parser.parseAndReturnValue("value = 100.0000", vDouble));
-//  EXPECT_DOUBLE_EQ(100., vDouble);
-//  ASSERT_TRUE(parser.parseAndReturnValue("value = 0.0000", vDouble));
-//  EXPECT_DOUBLE_EQ(0., vDouble);
-//  ASSERT_TRUE(parser.parseAndReturnValue("value = -0.0000", vDouble));
-//  EXPECT_DOUBLE_EQ(0., vDouble);
+  ASSERT_TRUE(parser.parseAndReturnValue("value = 100.", vDouble));
+  EXPECT_DOUBLE_EQ(100., vDouble);
+  ASSERT_TRUE(parser.parseAndReturnValue("value = 100.0000", vDouble));
+  EXPECT_DOUBLE_EQ(100., vDouble);
+  ASSERT_TRUE(parser.parseAndReturnValue("value = 0.0000", vDouble));
+  EXPECT_DOUBLE_EQ(0., vDouble);
+  ASSERT_TRUE(parser.parseAndReturnValue("value = -0.0000", vDouble));
+  EXPECT_DOUBLE_EQ(0., vDouble);
   ASSERT_TRUE(parser.parseAndReturnValue("value = 1.0e-2", vDouble));
   EXPECT_DOUBLE_EQ(0.01, vDouble);
   ASSERT_TRUE(parser.parseAndReturnValue("value = 1.0E-2", vDouble));

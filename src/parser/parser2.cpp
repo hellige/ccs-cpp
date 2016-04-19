@@ -2,6 +2,7 @@
 
 #include <iostream>
 #include <istream>
+#include <regex>
 #include <vector>
 
 namespace ccs {
@@ -15,7 +16,7 @@ struct Token {
     EOS,
     LPAREN, RPAREN, LBRACE, RBRACE, SEMI, COLON, COMMA, DOT, GT, EQ, SLASH,
     CONSTRAIN, CONTEXT, IMPORT, OVERRIDE,
-    INT, DOUBLE, IDENT, STRING
+    INT, DOUBLE, IDENT, NUMID, STRING
   };
 
   Type type;
@@ -126,8 +127,7 @@ private:
     case '"': return string('"');
     }
 
-    if (c == '-' || std::isdigit(c)) return number(c);
-
+    if (numIdInitChar(c)) return numId(c);
     if (identInitChar(c)) return ident(c);
 
     throw std::runtime_error("TODO 2"); // TODO ERROR!
@@ -238,37 +238,50 @@ private:
     return tok;
   }
 
-  bool numberChar(int c) {
+  bool numIdInitChar(int c) {
     if ('0' <= c && c <= '9') return true;
-    if (c == '-' || c == '.') return true;
-    if (c == 'e' || c == 'E') return true;
-    if (identInitChar(c)) return true; // TODO this isn't really right, see below...
+    if (c == '-' || c == '+') return true;
     return false;
   }
 
-  /*
-   * TODO three types:
-   *  INT/DOUBLE num: -? 0123 (. 0123)? (eE -? 0123 (. 0123)?)?
-   *  IDENT? numIdent: num [a-zA-Z_$]+
-   */
-  Token number(char first) {
+  bool numIdChar(int c) {
+    if (numIdInitChar(c)) return true;
+    if (identChar(c)) return true;
+    if (c == '.') return true;
+    return false;
+  }
+
+  Token numId(char first) {
+    static std::regex intRe("(\\+|-)?[0-9]+");
+    static std::regex doubleRe("[-+]?[0-9]+\\.?[0-9]*([eE][-+]?[0-9]+)?");
+
     if (first == '0' and stream_.peek() == 'x') {
       stream_.get();
       return hexLiteral();
     }
 
-    Token token(Token::DOUBLE, first);
-    while (numberChar(stream_.peek())) token.append(stream_.get());
-    try {
-      token.doubleValue = boost::lexical_cast<double>(token.value);
-    } catch (const std::bad_cast &e) {
-      throw std::runtime_error("BAD DOUBLE"); // TODO error
+    Token token(Token::NUMID, first);
+    while (numIdChar(stream_.peek())) token.append(stream_.get());
+
+    if (std::regex_match(token.value, intRe)) {
+      try {
+        token.type = Token::INT;
+        token.intValue = boost::lexical_cast<int64_t>(token.value);
+        return token;
+      } catch (const std::bad_cast &e) {
+        throw std::runtime_error("INTERNAL: BAD INT RE MATCH?"); // TODO error
+      }
+    } else if (std::regex_match(token.value, doubleRe)) {
+      try {
+        token.type = Token::DOUBLE;
+        token.doubleValue = boost::lexical_cast<double>(token.value);
+        return token;
+      } catch (const std::bad_cast &e) {
+        throw std::runtime_error("INTERNAL: BAD DOUBLE RE MATCH?"); // TODO error
+      }
     }
-    if (round(token.doubleValue) == token.doubleValue) {
-      token.type = Token::INT;
-      token.intValue = round(token.doubleValue);
-    }
-    return token;
+
+    return token; // it's a generic NUMID
   }
 
   int hexChar(int c) {
@@ -410,11 +423,12 @@ private:
       prop.value_.setDouble(cur_.doubleValue); break;
     case Token::STRING:
       prop.value_.setString(cur_.stringValue); break;
+    case Token::NUMID:
+      prop.value_.setString(StringVal(cur_.value)); break;
     case Token::IDENT:
-      // TODO deal with num+literal stuff?
       if (cur_.value == "true") prop.value_.setBool(true);
       else if (cur_.value == "false") prop.value_.setBool(false);
-      else throw std::runtime_error("TODO 8"); // TODO error
+      else prop.value_.setString(StringVal(cur_.value));
       break;
     default:
       throw std::runtime_error("TODO 4"); // TODO error

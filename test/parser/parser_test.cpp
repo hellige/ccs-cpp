@@ -3,14 +3,14 @@
 #include <gtest/gtest.h>
 
 #include "parser/ast.h"
-#include "parser/parser2.h"
+#include "parser/parser.h"
 
 using namespace ccs;
 
 namespace {
 
 struct P {
-  Parser2 parser;
+  Parser parser;
   P() : parser(CcsLogger::StdErr) {}
   bool parse(const std::string &input) {
     std::istringstream str(input);

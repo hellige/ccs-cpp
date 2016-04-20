@@ -21,6 +21,9 @@ class BuildContext;
 
 namespace ast {
 
+// TODO it would be nice to clean up these structs a bit, now that we're not
+// using spirit and needing related contortions anymore...
+
 struct PropDef {
   std::string name_;
   Value value_;
@@ -33,7 +36,6 @@ struct PropDef {
 
 struct Constraint {
   Key key_;
-  Constraint() {} // TODO delete? old parser?
   explicit Constraint(const Key &key) : key_(key) {}
 };
 
@@ -96,7 +98,6 @@ struct Import {
   std::string location;
   Nested ast;
 
-  Import() {} // TODO delete? old parser?
   explicit Import(const std::string &location) : location(location) {}
 };
 

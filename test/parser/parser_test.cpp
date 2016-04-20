@@ -42,17 +42,22 @@ TEST(ParserTest, BasicPhrases) {
   EXPECT_TRUE(parser.parse("@import 'file'"));
   EXPECT_TRUE(parser.parse("@context (foo.bar > baz)"));
   EXPECT_TRUE(parser.parse("@context (foo x.bar > baz >)"));
+  EXPECT_FALSE(parser.parse("@context (foo x.bar > # baz >)"));
   EXPECT_TRUE(parser.parse("prop = 'val'"));
   EXPECT_TRUE(parser.parse("elem.id {}"));
   EXPECT_TRUE(parser.parse("elem.id {prop = 'val'}"));
+  EXPECT_FALSE(parser.parse("elem.id {prop = @override 'hi'}"));
   EXPECT_TRUE(parser.parse("a.class.class blah > elem.id {prop=3}"));
   EXPECT_TRUE(parser.parse("a.class.class blah > elem.id {prop=2.3}"));
   EXPECT_TRUE(parser.parse("a.class.class blah > elem.id {prop=\"val\"}"));
+  EXPECT_FALSE(parser.parse("a.class.class blah : elem.id { prop=\"val\" }"));
+  EXPECT_FALSE(parser.parse("a.class.class blah elem.id prop=\"val\" }"));
   EXPECT_TRUE(parser.parse("a.class.class blah > elem.id {prop=0xAB12}"));
   EXPECT_TRUE(parser.parse("a.class.class blah > elem. id {prop=2.3}"));
   EXPECT_TRUE(parser.parse("a.class. class > elem.id {prop=\"val\"}"));
   EXPECT_FALSE(parser.parse("blah"));
   EXPECT_FALSE(parser.parse("@import 'file'; @context (foo)"));
+  EXPECT_FALSE(parser.parse("@yuno?"));
   EXPECT_TRUE(parser.parse("@import 'file' ; @constrain foo"));
   EXPECT_TRUE(parser.parse("a.class { @import 'file' }"));
   EXPECT_FALSE(parser.parse("a.class { @context (foo) }"));
@@ -75,6 +80,7 @@ TEST(ParserTest, Comments) {
   EXPECT_TRUE(parser.parse("prop = /**/ 'val'"));
   EXPECT_TRUE(parser.parse("prop = /* comment /*nest*/ more */ 'val'"));
   EXPECT_TRUE(parser.parse("elem.id /* comment */ {prop = 'val'}"));
+  EXPECT_FALSE(parser.parse("elem.id /* comment {prop = 'val'}"));
   EXPECT_TRUE(parser.parse("// comment\nelem { prop = 'val' prop = 'val' }"));
 }
 
@@ -110,6 +116,16 @@ TEST(ParserTest, Constraints) {
   EXPECT_TRUE(parser.parse("a.b: @constrain a.c"));
 }
 
+TEST(ParserTest, StringsWithInterpolation) {
+  P parser;
+  EXPECT_TRUE(parser.parse("a = 'hi'"));
+  EXPECT_FALSE(parser.parse("a = 'hi"));
+  EXPECT_FALSE(parser.parse("a = 'hi\\"));
+  EXPECT_FALSE(parser.parse("a = 'hi\\4 there'"));
+  EXPECT_TRUE(parser.parse("a = 'h${there}i'"));
+  EXPECT_FALSE(parser.parse("a = 'h$there}i'"));
+  EXPECT_FALSE(parser.parse("a = 'h${t-here}i'"));
+}
 
 TEST(ParserTest, ParsesIntegers) {
   P parser;

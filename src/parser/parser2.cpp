@@ -5,6 +5,13 @@
 #include <regex>
 #include <vector>
 
+#define THROW(where, stuff) \
+  do { \
+    std::ostringstream _message; \
+    _message << stuff; \
+    throw parse_error(_message.str(), where); \
+  } while (0)
+
 namespace ccs {
 
 namespace {
@@ -15,6 +22,14 @@ struct Location {
 
   Location(uint32_t line, uint32_t column)
   : line(line), column(column) {}
+};
+
+struct parse_error {
+  std::string what;
+  Location where;
+
+  parse_error(const std::string &what, Location where)
+  : what(what), where(where) {}
 };
 
 // TODO collapse IDENT and STRING?
@@ -47,6 +62,33 @@ struct Token {
   void append(char c) { value += c; }
 };
 
+std::ostream &operator<<(std::ostream &os, Token::Type type) {
+  switch (type) {
+  case Token::EOS: os << "end-of-input"; break;
+  case Token::LPAREN: os << "'('"; break;
+  case Token::RPAREN: os << "')"; break;
+  case Token::LBRACE: os << "'{'"; break;
+  case Token::RBRACE: os << "'}'"; break;
+  case Token::SEMI: os << "';'"; break;
+  case Token::COLON: os << "':'"; break;
+  case Token::COMMA: os << "','"; break;
+  case Token::DOT: os << "'.'"; break;
+  case Token::GT: os << "'>'"; break;
+  case Token::EQ: os << "'='"; break;
+  case Token::SLASH: os << "'/'"; break;
+  case Token::CONSTRAIN: os << "'@constrain'"; break;
+  case Token::CONTEXT: os << "'@context'"; break;
+  case Token::IMPORT: os << "'@import'"; break;
+  case Token::OVERRIDE: os << "'@override'"; break;
+  case Token::INT: os << "integer"; break;
+  case Token::DOUBLE: os << "double"; break;
+  case Token::IDENT: os << "identifier"; break;
+  case Token::NUMID: os << "numeric/identifier"; break;
+  case Token::STRING: os << "string literal"; break;
+  }
+  return os;
+}
+
 class Buf {
   std::istream &stream_;
   uint32_t line_;
@@ -77,6 +119,7 @@ public:
   }
 
   Location location() { return Location(line_, column_); }
+  Location peekLocation() { return Location(line_, column_+1); }
 };
 
 class Lexer {
@@ -121,7 +164,7 @@ private:
       else if (tok.value == "@context") tok.type = Token::CONTEXT;
       else if (tok.value == "@import") tok.type = Token::IMPORT;
       else if (tok.value == "@override") tok.type = Token::OVERRIDE;
-      else throw std::runtime_error("TODO 1"); // TODO ERROR!
+      else THROW(where, "Unrecognized @-command: " << tok.value);
       return tok;
     }
     case '\'': return string(c, where);
@@ -131,7 +174,8 @@ private:
     if (numIdInitChar(c)) return numId(c, where);
     if (identInitChar(c)) return ident(c, where);
 
-    throw std::runtime_error("TODO 2"); // TODO ERROR!
+    THROW(where, "Unexpected character: '" << (char)c << "' (0x" << std::hex
+        << c << ")");
   }
 
   bool comment(int c) {
@@ -152,7 +196,8 @@ private:
   void multilineComment() {
     while (true) {
       int c = stream_.get();
-      if (c == EOF) throw std::runtime_error("Unterminated multi-line comment");
+      if (c == EOF)
+        THROW(stream_.location(), "Unterminated multi-line comment");
       if (c == '*' && stream_.peek() == '/') {
         stream_.get();
         return;
@@ -192,18 +237,21 @@ private:
     while (stream_.peek() != first) {
       switch (stream_.peek()) {
       case EOF:
-        throw std::runtime_error("BAD EOF 1"); // TODO error
+        THROW(stream_.peekLocation(), "Unterminated string literal");
       case '$': {
         stream_.get();
         if (stream_.peek() != '{')
-          throw std::runtime_error("EXPECTED {"); // TODO error
+          THROW(stream_.peekLocation(), "Expected '{'");
         stream_.get();
         if (!current.empty()) result.elements_.push_back(current);
         current = "";
         Interpolant interpolant;
         while (stream_.peek() != '}') {
           if (!interpolantChar(stream_.peek()))
-              throw std::runtime_error("BAD INTERPOLANT CHAR"); // TODO error
+              THROW(stream_.peekLocation(),
+                  "Character not allowed in string interpolant: '" <<
+                  (char)stream_.peek() << "' (0x" << std::hex << stream_.peek()
+                  << ")");
           interpolant.name += stream_.get();
         }
         stream_.get();
@@ -214,7 +262,7 @@ private:
         stream_.get();
         auto escape = stream_.get();
         switch (escape) {
-          case EOF: throw std::runtime_error("BAD EOF 2"); // TODO error
+          case EOF: THROW(stream_.location(), "Unterminated string literal");
           case '$': current += '$'; break;
           case '\'': current += '\''; break;
           case '"': current += '"'; break;
@@ -223,7 +271,8 @@ private:
           case 'n': current += '\n'; break;
           case 'r': current += '\r'; break;
           case '\n': break; // escaped newline: ignore
-          default: throw std::runtime_error("BAD ESCAPE"); // TODO error
+          default: THROW(stream_.location(), "Unrecognized escape sequence: '\\"
+              << (char)escape << "' (0x" << std::hex << escape << ")");
         }
         break;
       }
@@ -270,7 +319,9 @@ private:
         token.intValue = boost::lexical_cast<int64_t>(token.value);
         return token;
       } catch (const std::bad_cast &e) {
-        throw std::runtime_error("INTERNAL: BAD INT RE MATCH?"); // TODO error
+        THROW(where, "Internal error: "
+            << "integer regex matched, but lexical cast failed! '"
+            << token.value << "'");
       }
     } else if (std::regex_match(token.value, doubleRe)) {
       try {
@@ -278,7 +329,9 @@ private:
         token.doubleValue = boost::lexical_cast<double>(token.value);
         return token;
       } catch (const std::bad_cast &e) {
-        throw std::runtime_error("INTERNAL: BAD DOUBLE RE MATCH?"); // TODO error
+        THROW(where, "Internal error: "
+            << "double regex matched, but lexical cast failed! '"
+            << token.value << "'");
       }
     }
 
@@ -342,7 +395,7 @@ private:
 
   void expect(Token::Type type) {
     if (!advanceIf(type))
-      throw std::runtime_error("TODO 3"); // TODO error
+      THROW(cur_.location, "Expected " << type << ", found " << cur_.type);
   }
 
   ast::SelectorBranch::P parseContext() {
@@ -370,12 +423,13 @@ private:
 
     if (advanceIf(Token::COLON)) {
       if (!parsePrimRule(nested))
-        throw std::runtime_error("TODO 6"); // TODO error!
+        THROW(cur_.location,
+            "Expected @import, @constrain, or property setting");
       advanceIf(Token::SEMI);
     } else if (advanceIf(Token::LBRACE)) {
       while (!advanceIf(Token::RBRACE)) parseRule(nested);
     } else {
-      throw std::runtime_error("TODO 7"); // TODO error!
+      THROW(cur_.location, "Expected ':' or '{' following selector");
     }
 
     ast.addRule(nested);
@@ -387,7 +441,7 @@ private:
       advance();
       expect(Token::STRING);
       if (last_.stringValue.interpolation())
-        throw std::runtime_error("INTERPOLATION NOT ALLOWED HERE");
+        THROW(last_.location, "Interpolation not allowed in import statements");
       ast.addRule(ast::Import(last_.stringValue.str()));
       return true;
     case Token::CONSTRAIN:
@@ -412,7 +466,7 @@ private:
 
   void parseProperty(ast::Nested &ast, bool override) {
     ast::PropDef prop;
-    prop.name_ = parseIdent();
+    prop.name_ = parseIdent("property name");
     prop.override_ = override;
     expect(Token::EQ);
 
@@ -435,7 +489,9 @@ private:
       else prop.value_.setString(StringVal(cur_.value));
       break;
     default:
-      throw std::runtime_error("TODO 4"); // TODO error
+      THROW(cur_.location, cur_.type
+          << " cannot occur here. Expected property value "
+          << "(number, identifier, string, or boolean)");
     }
     ast.addRule(prop);
     advance();
@@ -502,21 +558,22 @@ private:
   Key parseSingleStep() {
     Key key;
     do {
-      auto name = parseIdent();
+      auto name = parseIdent("selector name");
       key.addName(name);
-      while (advanceIf(Token::DOT)) key.addValue(name, parseIdent());
+      while (advanceIf(Token::DOT))
+        key.addValue(name, parseIdent("selector value"));
     } while (advanceIf(Token::SLASH));
     return key;
   }
 
-  std::string parseIdent() {
+  std::string parseIdent(const char *what) {
     if (advanceIf(Token::IDENT)) return last_.value;
     if (advanceIf(Token::STRING)) {
       if (last_.stringValue.interpolation())
-        throw std::runtime_error("INTERPOLATION NOT ALLOWED HERE");
+        THROW(last_.location, "Interpolation not allowed in " << what);
       return last_.stringValue.str();
     }
-    throw std::runtime_error("TODO 5"); // TODO error
+    THROW(cur_.location, cur_.type << " cannot occur here. Expected " << what);
   }
 };
 
@@ -532,13 +589,10 @@ bool Parser2::parseCcsStream(const std::string &fileName, std::istream &stream,
     std::ostringstream msg;
     msg << "Unknown error parsing " << fileName + "!";
     log.error(msg.str());
-  } catch (const std::runtime_error &e) {
-//    const classic::file_position_base<std::string> &pos =
-//        e.first.get_position();
+  } catch (const parse_error &e) {
     std::ostringstream msg;
-//    msg << "Parse error at file " << pos.file << ':' << pos.line << ':'
-//        << pos.column << ": '" << e.first.get_currentline() << "'";
-    msg << "Parse error: " << e.what();
+    msg << "Parse error at file " << fileName << ':' << e.where.line << ':'
+        << e.where.column << ": " << e.what;
     log.error(msg.str());
   }
   return false;

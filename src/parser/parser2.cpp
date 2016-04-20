@@ -9,8 +9,18 @@ namespace ccs {
 
 namespace {
 
+struct Location {
+  uint32_t line;
+  uint32_t column;
+
+  Location(uint32_t line, uint32_t column)
+  : line(line), column(column) {}
+};
+
 // TODO collapse IDENT and STRING?
 
+// TODO this should be cleaned up, all these stupid "values" is dumb and
+// confusing...
 struct Token {
   enum Type {
     EOS,
@@ -20,31 +30,30 @@ struct Token {
   };
 
   Type type;
+  Location location;
   std::string value;
   StringVal stringValue;
   int64_t intValue; // only valid in case of ints...
   double doubleValue; // only valid in case of numbers...
 
-  Token() : type(EOS), intValue(0), doubleValue(0) {}
-  Token(Type type) : type(type), intValue(0), doubleValue(0) {}
-  Token(Type type, char first) : type(type), intValue(0), doubleValue(0) {
+  Token() : type(EOS), location(0, 0), intValue(0), doubleValue(0) {}
+  Token(Type type, Location loc)
+  : type(type), location(loc), intValue(0), doubleValue(0) {}
+  Token(Type type, char first, Location loc)
+  : type(type), location(loc), intValue(0), doubleValue(0) {
     value += first;
   }
-  Token(Type type, const std::string value)
-  : type(type), value(value), intValue(0), doubleValue(0) {}
 
   void append(char c) { value += c; }
 };
 
 class Buf {
-  static constexpr size_t SIZE = 100; // TODO stupid size.
   std::istream &stream_;
-  char buf_[SIZE];
-  int pos_;
-  int lim_;
+  uint32_t line_;
+  uint32_t column_;
 
 public:
-  explicit Buf(std::istream &stream) : stream_(stream), pos_(0), lim_(0) {
+  explicit Buf(std::istream &stream) : stream_(stream), line_(1), column_(0) {
     stream_.unsetf(std::ios::skipws);
   }
 
@@ -52,40 +61,30 @@ public:
   const Buf &operator=(const Buf &) = delete;
 
   int get() {
-    if (!ensure(1)) return EOF;
-    return buf_[pos_++];
+    auto c = stream_.get();
+    // this way of tracking location gives funny results when get() returns
+    // a newline, but we don't actually care about that anyway...
+    column_++;
+    if (c == '\n') {
+      line_++;
+      column_ = 0;
+    }
+    return c;
   }
 
   int peek() {
-    if (!ensure(1)) return EOF;
-    return buf_[pos_];
+    return stream_.peek();
   }
 
-private:
-  bool ensure(int n) {
-    if (pos_ + n <= lim_) return true;
-
-    auto delta = lim_ - pos_;
-    memmove(buf_, buf_ + pos_, lim_ - pos_);
-    pos_ = 0;
-    lim_ = delta;
-    stream_.read(buf_ + lim_, SIZE - lim_);
-    auto read = stream_.gcount();
-    lim_ += read;
-    return pos_ + n <= lim_;
-  }
+  Location location() { return Location(line_, column_); }
 };
-
-// TODO position info
 
 class Lexer {
   Buf stream_;
   Token next_;
 
 public:
-  Lexer(std::istream &stream) : stream_(stream) {
-    next_ = nextToken();
-  }
+  Lexer(std::istream &stream) : stream_(stream), next_(nextToken()) {}
 
   const Token &peek() const { return next_; }
 
@@ -101,21 +100,23 @@ private:
 
     while (std::isspace(c) || comment(c)) c = stream_.get();
 
+    auto where = stream_.location();
+
     switch (c) {
-    case EOF: return Token::EOS;
-    case '(': return Token::LPAREN;
-    case ')': return Token::RPAREN;
-    case '{': return Token::LBRACE;
-    case '}': return Token::RBRACE;
-    case ';': return Token::SEMI;
-    case ':': return Token::COLON;
-    case ',': return Token::COMMA;
-    case '.': return Token::DOT;
-    case '>': return Token::GT;
-    case '=': return Token::EQ;
-    case '/': return Token::SLASH;
+    case EOF: return Token(Token::EOS, where);
+    case '(': return Token(Token::LPAREN, where);
+    case ')': return Token(Token::RPAREN, where);
+    case '{': return Token(Token::LBRACE, where);
+    case '}': return Token(Token::RBRACE, where);
+    case ';': return Token(Token::SEMI, where);
+    case ':': return Token(Token::COLON, where);
+    case ',': return Token(Token::COMMA, where);
+    case '.': return Token(Token::DOT, where);
+    case '>': return Token(Token::GT, where);
+    case '=': return Token(Token::EQ, where);
+    case '/': return Token(Token::SLASH, where);
     case '@': {
-      Token tok = ident(c);
+      Token tok = ident(c, where);
       if (tok.value == "@constrain") tok.type = Token::CONSTRAIN;
       else if (tok.value == "@context") tok.type = Token::CONTEXT;
       else if (tok.value == "@import") tok.type = Token::IMPORT;
@@ -123,12 +124,12 @@ private:
       else throw std::runtime_error("TODO 1"); // TODO ERROR!
       return tok;
     }
-    case '\'': return string('\'');
-    case '"': return string('"');
+    case '\'': return string(c, where);
+    case '"': return string(c, where);
     }
 
-    if (numIdInitChar(c)) return numId(c);
-    if (identInitChar(c)) return ident(c);
+    if (numIdInitChar(c)) return numId(c, where);
+    if (identInitChar(c)) return ident(c, where);
 
     throw std::runtime_error("TODO 2"); // TODO ERROR!
   }
@@ -185,7 +186,7 @@ private:
     return false;
   }
 
-  Token string(char first) {
+  Token string(char first, Location where) {
     StringVal result;
     std::string current;
     while (stream_.peek() != first) {
@@ -233,7 +234,7 @@ private:
     }
     stream_.get();
     if (!current.empty()) result.elements_.push_back(current);
-    auto tok = Token(Token::STRING);
+    auto tok = Token(Token::STRING, where);
     tok.stringValue = result;
     return tok;
   }
@@ -251,16 +252,16 @@ private:
     return false;
   }
 
-  Token numId(char first) {
+  Token numId(char first, Location where) {
     static std::regex intRe("(\\+|-)?[0-9]+");
     static std::regex doubleRe("[-+]?[0-9]+\\.?[0-9]*([eE][-+]?[0-9]+)?");
 
     if (first == '0' and stream_.peek() == 'x') {
       stream_.get();
-      return hexLiteral();
+      return hexLiteral(where);
     }
 
-    Token token(Token::NUMID, first);
+    Token token(Token::NUMID, first, where);
     while (numIdChar(stream_.peek())) token.append(stream_.get());
 
     if (std::regex_match(token.value, intRe)) {
@@ -291,8 +292,8 @@ private:
     return -1;
   }
 
-  Token hexLiteral() {
-    Token token(Token::INT);
+  Token hexLiteral(Location where) {
+    Token token(Token::INT, where);
     for (int n = hexChar(stream_.peek()); n != -1;
         n = hexChar(stream_.peek())) {
       token.intValue = token.intValue * 16 + n;
@@ -302,8 +303,8 @@ private:
     return token;
   }
 
-  Token ident(char first) {
-    Token token(Token::IDENT, first);
+  Token ident(char first, Location where) {
+    Token token(Token::IDENT, first, where);
     while (identChar(stream_.peek())) token.append(stream_.get());
     return token;
   }
@@ -312,14 +313,14 @@ private:
 }
 
 class ParserImpl {
+  std::string fileName_;
   Lexer lex_;
   Token cur_;
   Token last_;
 
 public:
-  ParserImpl(const std::string &fileName, std::istream &stream) : lex_(stream) {
-    (void)fileName; // TODO
-  }
+  ParserImpl(const std::string &fileName, std::istream &stream)
+  : fileName_(fileName), lex_(stream) {}
 
   bool parseRuleset(ast::Nested &ast) {
     advance();
@@ -413,8 +414,11 @@ private:
     ast::PropDef prop;
     prop.name_ = parseIdent();
     prop.override_ = override;
-    // TODO track origins!
     expect(Token::EQ);
+
+    // we set the origin from the location of the equals sign. it's a bit
+    // arbitrary, but it seems as good as anything.
+    prop.origin_ = Origin(fileName_, last_.location.line);
 
     switch (cur_.type) {
     case Token::INT:

@@ -50,10 +50,11 @@ syn match ccsNumber '\d[[:digit:]]*\.\d*[eE][\-+]\=\d\+' contained
 syn keyword ccsBoolean true false skipwhite contained
 
 syn match ccsIdentifier '\<\w\+\>\(\s*=\)\@='
+syn match ccsDefId '\<\w\+\>' contained
 
 syn match ccsOperator '[.,>:|{}*()]'
 
-syn match ccsOperator '=' skipwhite nextgroup=ccsNumber,ccsBoolean,ccsString
+syn match ccsOperator '=' skipwhite nextgroup=ccsNumber,ccsBoolean,ccsString,ccsDefId
 
 let b:current_syntax = "ccs"
 hi def link ccsError Error
@@ -65,6 +66,7 @@ hi def link ccsComment Comment
 hi def link ccsString Constant
 hi def link ccsNumber Constant
 hi def link ccsBoolean Constant
+hi def link ccsDefId Constant
 hi def link ccsIdentifier Identifier
 hi def link ccsOperator Operator
 hi def link ccsInterpolant PreProc

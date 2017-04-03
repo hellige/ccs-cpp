@@ -43,14 +43,14 @@ public:
     std::set<std::shared_ptr<Tally>> tallies;
 
     std::set_intersection(
-        firstNode_.tallies().begin(), firstNode_.tallies().end(),
-        secondNode.tallies().begin(), secondNode.tallies().end(),
+        firstNode_.tallies<T>().begin(), firstNode_.tallies<T>().end(),
+        secondNode.tallies<T>().begin(), secondNode.tallies<T>().end(),
         std::inserter(tallies, tallies.end()));
 
     // result will be either empty or have exactly one entry.
 
     if (tallies.empty()) {
-      std::shared_ptr<Tally> tally = std::make_shared<T>(firstNode_,
+      std::shared_ptr<T> tally = std::make_shared<T>(firstNode_,
           secondNode);
       firstNode_.addTally(tally);
       secondNode.addTally(tally);

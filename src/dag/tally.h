@@ -45,6 +45,7 @@ public:
   Tally(const Tally &) = delete;
   Tally &operator=(const Tally &) = delete;
 
+  const Node &node() const { return *node_; }
   Node &node() { return *node_; }
 
   virtual void activate(const Node &leg, const Specificity &spec,

@@ -228,3 +228,27 @@ a b c: test = "right"
 ---
 test = right
 ===
+
+Test case from hippo...
+---
+expect = true
+env.a env.b : foo = 123
+env.lab, env.dev {
+  expect = false
+  env.a, env.b, env.c : expect = true
+}
+---
+env.a env.dev: expect = true
+env.dev: expect = false
+env.prod: expect = true
+===
+
+Identical conj and disj
+---
+a b : foo = and
+a, b : foo = or
+---
+a: foo = or
+b: foo = or
+a b: foo = and
+===

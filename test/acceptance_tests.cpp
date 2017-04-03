@@ -108,6 +108,8 @@ TEST_P(AcceptanceTests, Load) {
   ccs.loadCcsStream(input, "<literal>", ImportResolver::None);
   CcsContext root = ccs.build();
 
+  //ccs.logRuleDag();
+
   for (auto it = test.assertions.cbegin(); it != test.assertions.cend(); ++it) {
     CcsContext ctx = root;
     auto &cs = it->constraints;

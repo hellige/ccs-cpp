@@ -44,6 +44,7 @@ public:
   CcsDomain &loadCcsStream(std::istream &stream, const std::string &fileName,
       ImportResolver &importResolver);
   RuleBuilder ruleBuilder();
+  void logRuleDag() const;
 
   CcsContext build();
 };

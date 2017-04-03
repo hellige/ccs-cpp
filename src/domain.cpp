@@ -2,6 +2,7 @@
 
 #include <iostream>
 
+#include "graphviz.h"
 #include "ccs/context.h"
 #include "dag/dag_builder.h"
 #include "parser/loader.h"
@@ -56,6 +57,12 @@ RuleBuilder CcsDomain::ruleBuilder() {
 
 CcsContext CcsDomain::build() {
   return CcsContext(dag->root(), log, logAccesses);
+}
+
+void CcsDomain::logRuleDag() const {
+  std::ostringstream os;
+  os << "CCS rule DAG: " << Dumper(*dag->root());
+  log.info(os.str());
 }
 
 }

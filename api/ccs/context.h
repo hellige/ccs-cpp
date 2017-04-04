@@ -1,6 +1,7 @@
 #ifndef CCS_CONTEXT_H_
 #define CCS_CONTEXT_H_
 
+#include <iosfwd>
 #include <memory>
 #include <sstream>
 #include <stdexcept>
@@ -34,6 +35,8 @@ public:
   ~CcsContext() = default;
 
   class Builder;
+
+  void logRuleDag(std::ostream &os) const;
 
   Builder builder() const;
 

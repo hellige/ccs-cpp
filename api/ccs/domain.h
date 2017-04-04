@@ -2,7 +2,7 @@
 #define CCS_DOMAIN_H_
 
 #include <memory>
-#include <istream>
+#include <iosfwd>
 #include <string>
 
 #include "ccs/context.h"
@@ -44,7 +44,8 @@ public:
   CcsDomain &loadCcsStream(std::istream &stream, const std::string &fileName,
       ImportResolver &importResolver);
   RuleBuilder ruleBuilder();
-  void logRuleDag() const;
+
+  void logRuleDag(std::ostream &os) const;
 
   CcsContext build();
 };

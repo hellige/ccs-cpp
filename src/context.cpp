@@ -40,6 +40,10 @@ CcsContext::CcsContext(const CcsContext &parent, const std::string &name,
     const std::vector<std::string> &values)
   : searchState(SearchState::newChild(parent.searchState, Key(name, values))) {}
 
+void CcsContext::logRuleDag(std::ostream &os) const {
+  searchState->logRuleDag(os);
+}
+
 CcsContext::Builder CcsContext::builder() const { return Builder(*this); }
 
 const CcsProperty &CcsContext::getProperty(const std::string &propertyName)

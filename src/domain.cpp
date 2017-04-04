@@ -59,10 +59,8 @@ CcsContext CcsDomain::build() {
   return CcsContext(dag->root(), log, logAccesses);
 }
 
-void CcsDomain::logRuleDag() const {
-  std::ostringstream os;
-  os << "CCS rule DAG: " << Dumper(*dag->root());
-  log.info(os.str());
+void CcsDomain::logRuleDag(std::ostream &os) const {
+  os << Dumper(*dag->root());
 }
 
 }

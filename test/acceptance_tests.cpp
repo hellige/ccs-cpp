@@ -108,7 +108,8 @@ TEST_P(AcceptanceTests, Load) {
   ccs.loadCcsStream(input, "<literal>", ImportResolver::None);
   CcsContext root = ccs.build();
 
-  //ccs.logRuleDag();
+  //ccs.logRuleDag(std::cout);
+  //std::cout << std::endl;
 
   for (auto it = test.assertions.cbegin(); it != test.assertions.cend(); ++it) {
     CcsContext ctx = root;

@@ -91,7 +91,6 @@ void visit(const Dumper &dumper, std::ostream &os,
       visit(dumper, os, visited, tally.node());
     }
   }
-
 }
 
 }

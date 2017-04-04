@@ -11,6 +11,7 @@
 #include "dag/key.h"
 #include "dag/property.h"
 #include "dag/specificity.h"
+#include "graphviz.h"
 
 namespace ccs {
 
@@ -67,6 +68,13 @@ public:
 
   static std::shared_ptr<SearchState> newChild(
       const std::shared_ptr<const SearchState> &parent, const Key &key);
+
+  void logRuleDag(std::ostream &os) const {
+    if (parent)
+      parent->logRuleDag(os);
+    else
+      os << Dumper(*root);
+  }
 
   bool extendWith(const SearchState &priorState);
 

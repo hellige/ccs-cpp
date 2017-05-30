@@ -1,6 +1,7 @@
 #ifndef CCS_DOMAIN_H_
 #define CCS_DOMAIN_H_
 
+#include <functional>
 #include <memory>
 #include <iosfwd>
 #include <string>

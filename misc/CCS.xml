@@ -13,6 +13,7 @@
     <keywords keywords="@override" ignore_case="false" />
     <keywords2 keywords="@constrain" />
     <keywords3 keywords="@context" />
+    <keywords4 keywords="@import" />
   </highlighting>
   <extensionMap>
     <mapping ext="ccs" />

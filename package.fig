@@ -11,7 +11,7 @@ end
 
 config build
   include gcc/%(gcc_version)
-  include boost/1.63.0-1-gcc%(gcc_version)
+  include boost/1.67.0-1-gcc%(gcc_version)
 end
 
 config test

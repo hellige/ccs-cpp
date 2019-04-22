@@ -57,7 +57,7 @@ std::string StringVal::str() const {
 
 
 int Value::asInt() const
-  { return boost::apply_visitor(Caster<int64_t>(*this), val_); }
+  { return boost::apply_visitor(Caster<int>(*this), val_); }
 double Value::asDouble() const
   { return boost::apply_visitor(Caster<double>(*this), val_); }
 bool Value::asBool() const

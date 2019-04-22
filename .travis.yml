@@ -1,12 +1,57 @@
 language: cpp
-compiler: gcc
-#before_install:
-  #- sudo add-apt-repository ppa:boost-latest/ppa -y
-  #- sudo apt-get update -qq
-install:
-  - sudo apt-get install google-mock libboost-all-dev
+matrix:
+  include:
+    - os: linux
+      dist: xenial
+      env: BUILD_TYPE=Debug MATRIX_EVAL="CC=gcc-8 && CXX=g++-8"
+      addons:
+        apt:
+          sources:
+            - ubuntu-toolchain-r-test
+          packages:
+            - g++-8
+    - os: linux
+      dist: xenial
+      env: BUILD_TYPE=Release STATIC=On MATRIX_EVAL="CC=gcc-8 && CXX=g++-8"
+      addons:
+        apt:
+          sources:
+            - ubuntu-toolchain-r-test
+          packages:
+            - g++-8
+#    - os: linux
+#      dist: xenial
+#      compiler: clang
+#      env: BUILD_TYPE=Debug
+#      addons:
+#        apt:
+#          sources:
+#            - ubuntu-toolchain-r-test
+#          packages:
+#            - g++-8
+#    - os: linux
+#      dist: xenial
+#      compiler: clang
+#      env: BUILD_TYPE=Release STATIC=On
+#      addons:
+#        apt:
+#          sources:
+#            - ubuntu-toolchain-r-test
+#          packages:
+#            - g++-8
+    - os: osx
+      osx_image: xcode10.1
+      env: BUILD_TYPE=Release MATRIX_EVAL="brew link --overwrite gcc && CC=gcc-8 && CXX=g++-8"
+# we don't build with clang on osx yet, at least not until 10.14, and probably not even then.
+#    - os: osx
+#      osx_image: xcode10.1
+#      env: BUILD_TYPE=Release
+before_install:
+    - eval "${MATRIX_EVAL}"
 script:
-  - mkdir -p lib
-  - make -C lib -f /usr/share/doc/libgtest-dev/examples/make/Makefile gtest.a
-  - mv lib/gtest.a lib/libgtest.a
-  - make all
+  - mkdir out
+  - cd out
+  - cmake -DCMAKE_BUILD_TYPE=${BUILD_TYPE} ..
+  - cmake --build . -- -j2
+  - ctest --output-on-failure -D ExperimentalBuild -j2
+  - ctest --output-on-failure -D ExperimentalTest -j2

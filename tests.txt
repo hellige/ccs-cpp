@@ -24,7 +24,7 @@ first second: test = "incorrect"
 first.id second: test = correct
 ===
 
-ID match has greater specificisty
+ID match has greater specificity
 ---
 second.id: test = "correct"
 first second: test = "incorrect"

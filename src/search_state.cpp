@@ -68,10 +68,11 @@ const CcsProperty *SearchState::findProperty(const std::string &propertyName)
     if (prop) {
       msg << "Found property: " << propertyName
          << " = " << prop->strValue() << "\n";
+      msg << "    at " << prop->origin() << " in context: [" << *this << "]";
     } else {
       msg << "Property not found: " << propertyName << "\n";
+      msg << "    in context: [" << *this << "]";
     }
-    msg << "    in context: [" << *this << "]";
     log.info(msg.str());
   }
   return prop;

@@ -13,7 +13,7 @@ matrix:
             - libboost-dev
     - os: linux
       dist: xenial
-      env: BUILD_TYPE=Release STATIC=On MATRIX_EVAL="CC=gcc-8 && CXX=g++-8"
+      env: BUILD_TYPE=Release LTO=On MATRIX_EVAL="CC=gcc-8 && CXX=g++-8"
       addons:
         apt:
           sources:

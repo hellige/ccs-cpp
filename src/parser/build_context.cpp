@@ -40,6 +40,11 @@ public:
 
   virtual Node &traverse(ast::SelectorLeaf &selector) {
     Node &secondNode = selector.traverse(baseContext_);
+
+    // we've arrived at the same node by two different paths. no tally is
+    // actually needed here...
+    if (&firstNode_ == &secondNode) return firstNode_;
+
     std::set<std::shared_ptr<Tally>> tallies;
 
     std::set_intersection(

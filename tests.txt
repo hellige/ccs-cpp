@@ -252,3 +252,11 @@ a: foo = or
 b: foo = or
 a b: foo = and
 ===
+
+Duplicated constraint builds incorrect dag
+---
+b a {}
+a a : foo = here
+---
+a: foo = here
+===

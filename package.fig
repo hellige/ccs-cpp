@@ -10,11 +10,11 @@ config default
 end
 
 config build
-  include gcc/%(gcc_version)
-  include boost/1.67.0-2-gcc%(gcc_version)
+  include gcc/${GCC_VERSION}
+  include boost/1.67.0-2-gcc${GCC_VERSION}
 end
 
 config test
   include :build
-  include gtest/1.8.0-1-gcc%(gcc_version)
+  include gtest/1.8.0-1-gcc${GCC_VERSION}
 end

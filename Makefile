@@ -18,7 +18,7 @@ ifeq ($(shell which fig),)
 FIG = echo Fig not installed - skipping command: fig
 else
 GCC_VERSION ?= 6.3.0-1
-FIG=sed 's/%(gcc_version)/${GCC_VERSION}/g' package.fig | fig --file -
+FIG=sed 's/$${GCC_VERSION}/${GCC_VERSION}/g' package.fig | fig --file -
 export GCC_HOME := $(shell $(FIG) --log-level=warn --suppress-cleanup-of-retrieves -m -c build -g GCC_HOME)
 LIB_PATH=$(GCC_HOME)/lib64:lib
 endif

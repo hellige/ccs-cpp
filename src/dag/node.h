@@ -21,6 +21,7 @@ struct identity { typedef T type; };
 
 class Node {
   friend class Dumper;
+  std::shared_ptr<CcsTracer> tracer_; // to pin tracer, only non-null in root
   std::map<Key, std::shared_ptr<Node>> children;
   std::multimap<std::string, Property> props;
   std::set<std::shared_ptr<AndTally>> andTallies_;
@@ -29,8 +30,11 @@ class Node {
 
 public:
   Node() {}
+  Node(std::shared_ptr<CcsTracer> tracer) : tracer_(std::move(tracer)) {}
   Node(const Node &) = delete;
   Node &operator=(const Node &) = delete;
+
+  CcsTracer &tracer() const { return *tracer_; }
 
   const std::map<Key, std::shared_ptr<Node>> &allChildren() const
       { return children; }

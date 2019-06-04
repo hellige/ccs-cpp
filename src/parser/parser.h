@@ -12,10 +12,10 @@ namespace ccs {
 class Node;
 
 class Parser {
-  CcsLogger &log;
+  CcsTracer &tracer;
 
 public:
-  Parser(CcsLogger &log);
+  Parser(CcsTracer &tracer);
   ~Parser();
 
   bool parseCcsStream(const std::string &fileName, std::istream &stream,

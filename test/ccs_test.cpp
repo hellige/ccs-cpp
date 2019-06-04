@@ -243,8 +243,7 @@ struct FailingLogger : ccs::CcsLogger {
 }
 
 TEST(CcsTest, FalseConflict) {
-  FailingLogger logger;
-  CcsDomain ccs(logger);
+  CcsDomain ccs(std::make_shared<FailingLogger>());
   std::istringstream input("a b : foo = 'bar'");
   ccs.loadCcsStream(input, "<literal>", ImportResolver::None);
   CcsContext ctx = ccs.build();

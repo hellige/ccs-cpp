@@ -26,9 +26,8 @@ struct MissingProp : public CcsProperty {
 
 namespace { MissingProp Missing; }
 
-CcsContext::CcsContext(std::shared_ptr<const Node> root, CcsLogger &log,
-    bool logAccesses)
-  : searchState(new SearchState(root, log, logAccesses)) {}
+CcsContext::CcsContext(std::shared_ptr<const Node> root)
+  : searchState(new SearchState(root)) {}
 
 CcsContext::CcsContext(const CcsContext &parent, const Key &key)
   : searchState(SearchState::newChild(parent.searchState, key)) {}
@@ -48,7 +47,7 @@ CcsContext::Builder CcsContext::builder() const { return Builder(*this); }
 
 const CcsProperty &CcsContext::getProperty(const std::string &propertyName)
     const {
-  const CcsProperty *prop = searchState->findProperty(propertyName);
+  const CcsProperty *prop = searchState->findProperty(*this, propertyName);
   if (prop) return *prop;
   return Missing;
 }
@@ -62,7 +61,7 @@ const std::string &CcsContext::getString(const std::string &propertyName)
 
 const std::string &CcsContext::getString(const std::string &propertyName,
     const std::string &defaultVal) const {
-  const CcsProperty *prop(searchState->findProperty(propertyName, defaultVal));
+  const CcsProperty *prop(searchState->findProperty(*this, propertyName));
   if (!prop) return defaultVal;
   return prop->strValue();
 }
@@ -82,7 +81,7 @@ int CcsContext::getInt(const std::string &propertyName) const {
 }
 
 int CcsContext::getInt(const std::string &propertyName, int defaultVal) const {
-  const CcsProperty *prop(searchState->findProperty(propertyName, defaultVal));
+  const CcsProperty *prop(searchState->findProperty(*this, propertyName));
   if (!prop) return defaultVal;
   return prop->intValue();
 }
@@ -103,7 +102,7 @@ double CcsContext::getDouble(const std::string &propertyName) const {
 
 double CcsContext::getDouble(const std::string &propertyName,
     double defaultVal) const {
-  const CcsProperty *prop(searchState->findProperty(propertyName, defaultVal));
+  const CcsProperty *prop(searchState->findProperty(*this, propertyName));
   if (!prop) return defaultVal;
   return prop->doubleValue();
 }
@@ -124,7 +123,7 @@ bool CcsContext::getBool(const std::string &propertyName) const {
 
 bool CcsContext::getBool(const std::string &propertyName, bool defaultVal)
     const {
-  const CcsProperty *prop(searchState->findProperty(propertyName, defaultVal));
+  const CcsProperty *prop(searchState->findProperty(*this, propertyName));
   if (!prop) return defaultVal;
   return prop->boolValue();
 }

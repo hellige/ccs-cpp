@@ -1,10 +1,9 @@
 #ifndef CCS_SEARCH_STATE_H_
 #define CCS_SEARCH_STATE_H_
 
+#include <iosfwd>
 #include <map>
 #include <memory>
-#include <ostream>
-#include <sstream>
 #include <set>
 
 #include "ccs/domain.h"
@@ -52,16 +51,14 @@ class SearchState {
   std::map<const AndTally *, const TallyState *> tallyMap;
   // cache of properties newly set in this context
   std::map<std::string, PropertySetting> properties;
-  CcsLogger &log;
+  CcsTracer &tracer;
   Key key;
-  bool logAccesses;
   bool constraintsChanged;
 
   SearchState(const std::shared_ptr<const SearchState> &parent, const Key &key);
 
 public:
-  SearchState(std::shared_ptr<const Node> &root,
-      CcsLogger &log, bool logAccesses);
+  SearchState(std::shared_ptr<const Node> &root);
   SearchState(const SearchState &) = delete;
   SearchState &operator=(const SearchState &) = delete;
   ~SearchState();
@@ -69,16 +66,12 @@ public:
   static std::shared_ptr<SearchState> newChild(
       const std::shared_ptr<const SearchState> &parent, const Key &key);
 
-  void logRuleDag(std::ostream &os) const {
-    if (parent)
-      parent->logRuleDag(os);
-    else
-      os << Dumper(*root);
-  }
+  void logRuleDag(std::ostream &os) const;
 
   bool extendWith(const SearchState &priorState);
 
-  const CcsProperty *findProperty(const std::string &propertyName) const;
+  const CcsProperty *findProperty(const CcsContext &context,
+      const std::string &propertyName) const;
 
   bool add(Specificity spec, const Node *node) {
     auto pr = nodes.insert(std::make_pair(node, spec));
@@ -138,30 +131,12 @@ public:
     return parent->checkCache(propertyName);
   }
 
-  template <typename T>
-  const CcsProperty *findProperty(const std::string &propertyName,
-      T defaultVal) {
-    const CcsProperty *prop = doSearch(propertyName);
-    if (logAccesses) {
-      std::ostringstream msg;
-      if (prop) {
-        msg << "Found property: " << propertyName << " = "
-          << prop->strValue() << "\n";
-      } else {
-        msg << "Property not found: " << propertyName << ". Default = "
-          << defaultVal << "\n";
-      }
-      msg << "    in context: [" << *this << "]";
-      log.info(msg.str());
-    }
-    return prop;
-  }
-
   const TallyState *getTallyState(const AndTally *tally) const;
   void setTallyState(const AndTally *tally, const TallyState *state);
 
 private:
-  const CcsProperty *doSearch(const std::string &propertyName) const;
+  const CcsProperty *doSearch(const CcsContext &context,
+      const std::string &propertyName) const;
 
   friend std::ostream &operator<<(std::ostream &, const SearchState &);
   void append(std::ostream &out, bool isPrefix) const;

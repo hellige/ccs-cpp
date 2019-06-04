@@ -46,7 +46,7 @@ struct ImportVisitor : public boost::static_visitor<bool> {
         inProgress.end()) {
       std::ostringstream msg;
       msg << "Circular import detected involving '" << import.location << "'";
-      loader.logger().error(msg.str());
+      loader.tracer().onParseError(msg.str());
     } else {
       inProgress.push_back(import.location);
       result = resolver.resolve(import.location,
@@ -59,7 +59,7 @@ struct ImportVisitor : public boost::static_visitor<bool> {
         std::ostringstream msg;
         msg << "Failed to resolve '" << import.location
           << "'! (User-provided resolver returned false.)";
-        loader.logger().error(msg.str());
+        loader.tracer().onParseError(msg.str());
       }
     }
     return result;
@@ -93,7 +93,7 @@ struct Wrap : public SelectorLeaf {
 
   // left == this, always. guess we could just use enable_shared_from_this,
   // but that's just as ugly... spirit just doesn't like this way of doing
-  // things... it works fine, though, and i don't want to invest a lot of 
+  // things... it works fine, though, and i don't want to invest a lot of
   // time in switching to some kind of value-types-in-a-variant design just
   // to play nicer with spirit. it's also worth something to stay roughly
   // in sync with the java version. anyway, maybe reconsider down the road.

@@ -12,7 +12,7 @@
 
 namespace ccs {
 
-class CcsLogger;
+class CcsTracer;
 class CcsProperty;
 class Key;
 class Node;
@@ -22,8 +22,7 @@ class CcsContext {
   std::shared_ptr<SearchState> searchState;
 
   friend class CcsDomain;
-  CcsContext(std::shared_ptr<const Node> root, CcsLogger &log,
-      bool logAccesses);
+  CcsContext(std::shared_ptr<const Node> root);
   CcsContext(const CcsContext &parent, const Key &key);
   CcsContext(const CcsContext &parent, const std::string &name);
   CcsContext(const CcsContext &parent, const std::string &name,

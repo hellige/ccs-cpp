@@ -14,9 +14,9 @@ class DagBuilder {
   std::shared_ptr<BuildContext> buildContext_;
 
 public:
-  DagBuilder() :
+  DagBuilder(std::shared_ptr<CcsTracer> tracer) :
     nextProperty_(0),
-    root_(new Node()),
+    root_(new Node(std::move(tracer))),
     buildContext_(BuildContext::descendant(*this, *root_)) {}
 
   std::shared_ptr<const Node> root() { return root_; }

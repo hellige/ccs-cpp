@@ -11,12 +11,12 @@
 namespace ccs {
 
 class Loader {
-  CcsLogger &log;
+  CcsTracer &trace;
 
 public:
-  Loader(CcsLogger &log) : log(log) {}
+  Loader(CcsTracer &trace) : trace(trace) {}
 
-  CcsLogger &logger() { return log; }
+  CcsTracer &tracer() { return trace; }
 
   void loadCcsStream(std::istream &stream, const std::string &fileName,
       DagBuilder &dag, ImportResolver &importResolver) {
@@ -32,7 +32,7 @@ public:
   bool parseCcsStream(std::istream &stream, const std::string &fileName,
       ImportResolver &importResolver, std::vector<std::string> &inProgress,
       ast::Nested &ast) {
-    Parser parser(log);
+    Parser parser(trace);
     if (!parser.parseCcsStream(fileName, stream, ast)) return false;
     if (!ast.resolveImports(importResolver, *this, inProgress)) return false;
     return true;

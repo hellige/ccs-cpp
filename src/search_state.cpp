@@ -1,6 +1,8 @@
 #include "search_state.h"
 
 #include <algorithm>
+#include <ostream>
+#include <sstream>
 
 #include "ccs/domain.h"
 #include "dag/key.h"
@@ -13,15 +15,12 @@ namespace ccs {
 SearchState::SearchState(const std::shared_ptr<const SearchState> &parent,
     const Key &key) :
       parent(parent),
-      log(parent->log),
+      tracer(parent->tracer),
       key(key),
-      logAccesses(parent->logAccesses),
       constraintsChanged(false) {}
 
-SearchState::SearchState(std::shared_ptr<const Node> &root,
-    CcsLogger &log,
-    bool logAccesses) :
-      root(root), log(log), logAccesses(logAccesses) {
+SearchState::SearchState(std::shared_ptr<const Node> &root) :
+      root(root), tracer(root->tracer()) {
   constraintsChanged = false;
   root->activate(Specificity(), *this);
   while (constraintsChanged) {
@@ -52,6 +51,12 @@ std::shared_ptr<SearchState> SearchState::newChild(
   return searchState;
 }
 
+void SearchState::logRuleDag(std::ostream &os) const {
+  if (parent)
+    parent->logRuleDag(os);
+  else
+    os << Dumper(*root);
+}
 
 bool SearchState::extendWith(const SearchState &priorState) {
   constraintsChanged = false;
@@ -60,42 +65,22 @@ bool SearchState::extendWith(const SearchState &priorState) {
   return constraintsChanged;
 }
 
-const CcsProperty *SearchState::findProperty(const std::string &propertyName)
-    const {
-  const CcsProperty *prop = doSearch(propertyName);
-  if (logAccesses) {
-    std::ostringstream msg;
-    if (prop) {
-      msg << "Found property: " << propertyName
-         << " = " << prop->strValue() << "\n";
-      msg << "    at " << prop->origin() << " in context: [" << *this << "]";
-    } else {
-      msg << "Property not found: " << propertyName << "\n";
-      msg << "    in context: [" << *this << "]";
-    }
-    log.info(msg.str());
+const CcsProperty *SearchState::findProperty(const CcsContext &context,
+    const std::string &propertyName) const {
+  const CcsProperty *prop = doSearch(context, propertyName);
+  if (prop) {
+    tracer.onPropertyFound(context, propertyName, *prop);
+  } else {
+    tracer.onPropertyNotFound(context, propertyName);
   }
   return prop;
 }
 
-namespace {
-
-void origins(std::ostream &str, const std::vector<const Property *> &values) {
-  bool first = true;
-  for (auto it = values.cbegin(); it != values.cend(); ++it) {
-      if (!first) str << ", ";
-      str << (*it)->origin();
-      first = false;
-  }
-}
-
-}
-
-const CcsProperty *SearchState::doSearch(const std::string &propertyName)
-    const {
+const CcsProperty *SearchState::doSearch(const CcsContext &context,
+    const std::string &propertyName) const {
   auto it = properties.find(propertyName);
   if (it == properties.end()) {
-    if (parent) return parent->doSearch(propertyName);
+    if (parent) return parent->doSearch(context, propertyName);
     return NULL;
   }
 
@@ -109,13 +94,9 @@ const CcsProperty *SearchState::doSearch(const std::string &propertyName)
       [](const Property *l, const Property *r) {
     return l->propertyNumber() < r->propertyNumber();
   });
-  std::ostringstream msg;
-  msg << "Conflict detected for property '" << propertyName
-      << "' in context [" << *this << "]. "
-      << "(Conflicting settings at: [";
-  origins(msg, values);
-  msg << "].) Using most recent value.";
-  log.warn(msg.str());
+
+  std::vector<const CcsProperty *> baseValues(values.begin(), values.end());
+  tracer.onConflict(context, propertyName, baseValues);
   return values.back();
 }
 

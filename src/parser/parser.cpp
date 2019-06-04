@@ -577,7 +577,7 @@ private:
   }
 };
 
-Parser::Parser(CcsLogger &log) : log(log) {}
+Parser::Parser(CcsTracer &tracer) : tracer(tracer) {}
 Parser::~Parser() {}
 
 bool Parser::parseCcsStream(const std::string &fileName, std::istream &stream,
@@ -588,12 +588,12 @@ bool Parser::parseCcsStream(const std::string &fileName, std::istream &stream,
       return true;
     std::ostringstream msg;
     msg << "Unknown error parsing " << fileName + "!";
-    log.error(msg.str());
+    tracer.onParseError(msg.str());
   } catch (const parse_error &e) {
     std::ostringstream msg;
     msg << "Parse error at file " << fileName << ':' << e.where.line << ':'
         << e.where.column << ": " << e.what;
-    log.error(msg.str());
+    tracer.onParseError(msg.str());
   }
   return false;
 }

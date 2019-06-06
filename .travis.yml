@@ -55,5 +55,5 @@ script:
   - cmake --build . -- -j2
   - ctest --output-on-failure -D ExperimentalBuild -j2
   - ctest --output-on-failure -D ExperimentalTest -j2
-  - bash <(curl -s https://codecov.io/bash) || echo "Codecov did not collect coverage reports"
+  - bash <(curl -s https://codecov.io/bash) -x gcov-8
 

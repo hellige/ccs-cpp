@@ -1,4 +1,5 @@
 [![Build Status](https://travis-ci.org/hellige/ccs-cpp.svg?branch=master)](https://travis-ci.org/hellige/ccs-cpp)
+[![codecov](https://codecov.io/gh/hellige/ccs-cpp/branch/master/graph/badge.svg)](https://codecov.io/gh/hellige/ccs-cpp)
 
 CCS for C++
 ===========

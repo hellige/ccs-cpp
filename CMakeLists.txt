@@ -4,7 +4,7 @@ project(ccs DESCRIPTION "ccs configuration library")
 
 set(BOOST_INCLUDEDIR include)
 
-set(CMAKE_CXX_STANDARD 17)
+set(CMAKE_CXX_STANDARD 14)
 set(CMAKE_CXX_STANDARD_REQUIRED ON)
 #set(CMAKE_CXX_EXTENSIONS OFF)
 
@@ -32,8 +32,6 @@ include(CTest)
 set(CMAKE_EXPORT_COMPILE_COMMANDS ON)
 
 # External libraries/dependencies
-find_package(Boost 1.55.0 REQUIRED)
-include_directories(SYSTEM ${Boost_INCLUDE_DIRS})
 add_subdirectory(external/googletest)
 
 # au configuration

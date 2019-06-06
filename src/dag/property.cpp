@@ -3,30 +3,41 @@
 #include <cstdlib>
 #include <sstream>
 
-#include <boost/variant/static_visitor.hpp>
-
 #include "ccs/context.h"
 
 namespace ccs {
 
+template <typename S, typename V>
+S Value::accept(V &&visitor) const {
+  switch (which_) {
+    case String: return visitor(rawStringVal_);
+    case Int: return visitor(rawPrimVal_.intVal);
+    case Double: return visitor(rawPrimVal_.doubleVal);
+    case Bool: return visitor(rawPrimVal_.boolVal);
+  }
+  std::ostringstream msg;
+  msg << "Bad enum value " << which_;
+  throw std::runtime_error(msg.str());
+};
+
 namespace {
 
 template <typename S>
-struct Caster : public boost::static_visitor<S> {
+struct Caster {
   const Value &val;
   Caster(const Value &val) : val(val) {}
   template <typename T>
   S operator()(const T &v) const {
     (void)v;
     S s;
-    if (!CcsContext::coerceString(val.strVal_, s))
-      throw bad_coercion(val.name_, val.strVal_);
+    if (!CcsContext::coerceString(val.asString(), s))
+      throw bad_coercion(val.name(), val.asString());
     return s;
   }
   S operator()(const S &v) const { return v; }
 };
 
-struct ToString : public boost::static_visitor<std::string> {
+struct ToString {
   std::string operator()(bool v) const { return v ? "true" : "false"; }
   std::string operator()(const StringVal &v) const { return v.str(); }
   template <typename T>
@@ -37,32 +48,32 @@ struct ToString : public boost::static_visitor<std::string> {
   }
 };
 
-struct Interpolate : public boost::static_visitor<std::string> {
-  std::string operator()(const std::string &str) const { return str; }
-  std::string operator()(const Interpolant &interp) const {
-    const char *val = getenv(interp.name.c_str());
-    if (val) return std::string(val);
-    return "";
-  }
-};
+}
 
+void StringElem::interpolateInto(std::ostream &os) const {
+  if (isInterpolant) {
+    const char *val = getenv(value.c_str());
+    if (val) os << val;
+    return;
+  }
+
+  os << value;
 }
 
 std::string StringVal::str() const {
   std::ostringstream str;
   for (auto it = elements_.begin(); it != elements_.end(); ++it)
-    str << boost::apply_visitor(Interpolate(), *it);
+    it->interpolateInto(str);
   return str.str();
 }
 
-
 int Value::asInt() const
-  { return boost::apply_visitor(Caster<int>(*this), val_); }
+  { return accept<int>(Caster<int>(*this)); }
 double Value::asDouble() const
-  { return boost::apply_visitor(Caster<double>(*this), val_); }
+  { return accept<double>(Caster<double>(*this)); }
 bool Value::asBool() const
-  { return boost::apply_visitor(Caster<bool>(*this), val_); }
+  { return accept<bool>(Caster<bool>(*this)); }
 void Value::str()
-  { strVal_ = boost::apply_visitor(ToString(), val_); }
+  { strVal_ = accept<std::string>(ToString()); }
 
 }

@@ -243,19 +243,20 @@ private:
         if (stream_.peek() != '{')
           THROW(stream_.peekLocation(), "Expected '{'");
         stream_.get();
-        if (!current.empty()) result.elements_.push_back(current);
+        if (!current.empty()) result.elements_.emplace_back(current);
         current = "";
-        Interpolant interpolant;
+        std::string interpolant;
         while (stream_.peek() != '}') {
           if (!interpolantChar(stream_.peek()))
               THROW(stream_.peekLocation(),
                   "Character not allowed in string interpolant: '" <<
                   (char)stream_.peek() << "' (0x" << std::hex << stream_.peek()
                   << ")");
-          interpolant.name += stream_.get();
+          interpolant += stream_.get();
         }
         stream_.get();
-        result.elements_.push_back(interpolant);
+        std::cout << "INTERP: [" << interpolant << "]\n";
+        result.elements_.emplace_back(interpolant, true);
         break;
       }
       case '\\': {
@@ -282,7 +283,7 @@ private:
       }
     }
     stream_.get();
-    if (!current.empty()) result.elements_.push_back(current);
+    if (!current.empty()) result.elements_.emplace_back(current);
     auto tok = Token(Token::STRING, where);
     tok.stringValue = result;
     return tok;
@@ -314,23 +315,25 @@ private:
     while (numIdChar(stream_.peek())) token.append(stream_.get());
 
     if (std::regex_match(token.value, intRe)) {
-      try {
-        token.type = Token::INT;
-        token.intValue = boost::lexical_cast<int64_t>(token.value);
+      token.type = Token::INT;
+      char *end;
+      token.intValue = ::strtoll(token.value.c_str(), &end, 10);
+      if (end == token.value.c_str() + token.value.length()) {
         return token;
-      } catch (const std::bad_cast &e) {
+      } else {
         THROW(where, "Internal error: "
-            << "integer regex matched, but lexical cast failed! '"
+            << "integer regex matched, but strtoll() failed! '"
             << token.value << "'");
       }
     } else if (std::regex_match(token.value, doubleRe)) {
-      try {
-        token.type = Token::DOUBLE;
-        token.doubleValue = boost::lexical_cast<double>(token.value);
+      token.type = Token::DOUBLE;
+      char *end;
+      token.doubleValue = ::strtod(token.value.c_str(), &end);
+      if (end == token.value.c_str() + token.value.length()) {
         return token;
-      } catch (const std::bad_cast &e) {
+      } else {
         THROW(where, "Internal error: "
-            << "double regex matched, but lexical cast failed! '"
+            << "double regex matched, but strtod() failed! '"
             << token.value << "'");
       }
     }
@@ -418,21 +421,21 @@ private:
       return;
     }
 
-    ast::Nested nested;
-    nested.selector_ = parseSelector();
+    auto nested = std::make_unique<ast::Nested>();
+    nested->selector_ = parseSelector();
 
     if (advanceIf(Token::COLON)) {
-      if (!parsePrimRule(nested))
+      if (!parsePrimRule(*nested))
         THROW(cur_.location,
             "Expected @import, @constrain, or property setting");
       advanceIf(Token::SEMI);
     } else if (advanceIf(Token::LBRACE)) {
-      while (!advanceIf(Token::RBRACE)) parseRule(nested);
+      while (!advanceIf(Token::RBRACE)) parseRule(*nested);
     } else {
       THROW(cur_.location, "Expected ':' or '{' following selector");
     }
 
-    ast.addRule(nested);
+    ast.addRule(std::move(nested));
   }
 
   bool parsePrimRule(ast::Nested &ast) {
@@ -442,11 +445,11 @@ private:
       expect(Token::STRING);
       if (last_.stringValue.interpolation())
         THROW(last_.location, "Interpolation not allowed in import statements");
-      ast.addRule(ast::Import(last_.stringValue.str()));
+      ast.addRule(std::make_unique<ast::Import>(last_.stringValue.str()));
       return true;
     case Token::CONSTRAIN:
       advance();
-      ast.addRule(ast::Constraint(parseSingleStep()));
+      ast.addRule(std::make_unique<ast::Constraint>(parseSingleStep()));
       return true;
     case Token::OVERRIDE:
       advance();
@@ -465,35 +468,35 @@ private:
   }
 
   void parseProperty(ast::Nested &ast, bool override) {
-    ast::PropDef prop;
-    prop.name_ = parseIdent("property name");
-    prop.override_ = override;
+    auto prop = std::make_unique<ast::PropDef>();
+    prop->name_ = parseIdent("property name");
+    prop->override_ = override;
     expect(Token::EQ);
 
     // we set the origin from the location of the equals sign. it's a bit
     // arbitrary, but it seems as good as anything.
-    prop.origin_ = Origin(fileName_, last_.location.line);
+    prop->origin_ = Origin(fileName_, last_.location.line);
 
     switch (cur_.type) {
     case Token::INT:
-      prop.value_.setInt(cur_.intValue); break;
+      prop->value_.setInt(cur_.intValue); break;
     case Token::DOUBLE:
-      prop.value_.setDouble(cur_.doubleValue); break;
+      prop->value_.setDouble(cur_.doubleValue); break;
     case Token::STRING:
-      prop.value_.setString(cur_.stringValue); break;
+      prop->value_.setString(cur_.stringValue); break;
     case Token::NUMID:
-      prop.value_.setString(StringVal(cur_.value)); break;
+      prop->value_.setString(StringVal(cur_.value)); break;
     case Token::IDENT:
-      if (cur_.value == "true") prop.value_.setBool(true);
-      else if (cur_.value == "false") prop.value_.setBool(false);
-      else prop.value_.setString(StringVal(cur_.value));
+      if (cur_.value == "true") prop->value_.setBool(true);
+      else if (cur_.value == "false") prop->value_.setBool(false);
+      else prop->value_.setString(StringVal(cur_.value));
       break;
     default:
       THROW(cur_.location, cur_.type
           << " cannot occur here. Expected property value "
           << "(number, identifier, string, or boolean)");
     }
-    ast.addRule(prop);
+    ast.addRule(std::move(prop));
     advance();
     return;
   }
@@ -510,7 +513,7 @@ private:
   ast::SelectorLeaf::P parseSum() {
     auto left = parseProduct();
     while (advanceIf(Token::COMMA))
-      left = ast::SelectorLeaf::disj(left, parseProduct());
+      left = left->disjunction(left, parseProduct());
     return left;
   }
 
@@ -529,7 +532,7 @@ private:
     auto left = parseTerm();
     // term starts with ident or '(', which is enough to disambiguate...
     while (couldStartStep(cur_))
-      left = ast::SelectorLeaf::conj(left, parseTerm());
+      left = left->conjunction(left, parseTerm());
     return left;
   }
 
@@ -540,7 +543,7 @@ private:
       // peeking for ident or '(' does the trick.
       if (!couldStartStep(lex_.peek())) return left;
       advance();
-      left = ast::SelectorLeaf::desc(left, parseStep());
+      left = left->descendant(left, parseStep());
     }
     return left;
   }

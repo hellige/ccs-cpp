@@ -17,7 +17,7 @@ export FIG_REMOTE_URL ?= ftp://devnas/Builds/Fig/repos
 ifeq ($(shell which fig),)
 FIG = echo Fig not installed - skipping command: fig
 else
-GCC_VERSION ?= 6.3.0-1
+GCC_VERSION ?= 8.2.0-1
 FIG=sed 's/$${GCC_VERSION}/${GCC_VERSION}/g' package.fig | fig --file -
 export GCC_HOME := $(shell $(FIG) --log-level=warn --suppress-cleanup-of-retrieves -m -c build -g GCC_HOME)
 LIB_PATH=$(GCC_HOME)/lib64:lib
@@ -50,7 +50,7 @@ ifeq ($(system),Darwin)
 endif
 
 CXX = $(CCACHE) $(if $(GCC_HOME),$(GCC_HOME)/bin/,)g++ 
-CFLAGS = -std=gnu++0x -ggdb -O2 -Wall -Wextra -Werror \
+CFLAGS = -std=gnu++17 -ggdb3 -O0 -Wall -Wextra -Werror \
   -fdiagnostics-show-option $(PLATCFLAGS) $(INCLUDES)
 AR = ar rcu
 RANLIB = ranlib

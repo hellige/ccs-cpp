@@ -21,19 +21,38 @@ struct P {
     return parser.parseCcsStream("<literal>", str, ast);
   }
 
-  template<typename T>
-  bool parseAndReturnValue(const std::string &input, T &out) {
+  std::pair<bool, Value> parseAndReturnValue(const std::string &input) {
     std::istringstream str(input);
     ast::Nested ast;
-    if (!parser.parseCcsStream("<literal>", str, ast)) return false;
-    if (ast.rules_.size() != 1) return false;
-    ast::PropDef *propDef = boost::get<ast::PropDef>(&ast.rules_[0]);
-    if (!propDef) return false;
-    T *v = boost::get<T>(&propDef->value_.val_);
-    if (!v) return false;
-    out = *v;
+    if (!parser.parseCcsStream("<literal>", str, ast)) return {false, Value()};
+    if (ast.rules_.size() != 1) return {false, Value()};
+    ast::PropDef *propDef = dynamic_cast<ast::PropDef*>(ast.rules_[0].get());
+    if (!propDef) return {false, Value()};
+    return {true, propDef->value_};
+  }
+
+  bool parseDouble(const std::string &input, double &out) {
+    auto pr = parseAndReturnValue(input);
+    if (!pr.first) return false;
+    try {
+      out = pr.second.asDouble();
+    } catch (ccs::bad_coercion &) {
+      return false;
+    }
     return true;
   }
+
+  bool parseInt(const std::string &input, int64_t &out) {
+    auto pr = parseAndReturnValue(input);
+    if (!pr.first) return false;
+    try {
+      out = pr.second.asInt();
+    } catch (ccs::bad_coercion &) {
+      return false;
+    }
+    return true;
+  }
+
 };
 
 }
@@ -133,43 +152,46 @@ TEST(ParserTest, StringsWithInterpolation) {
 TEST(ParserTest, ParsesIntegers) {
   P parser;
   int64_t v64 = 0;
-  ASSERT_TRUE(parser.parseAndReturnValue("value = 100", v64));
+  ASSERT_TRUE(parser.parseInt("value = 100", v64));
   EXPECT_EQ(100, v64);
-  ASSERT_TRUE(parser.parseAndReturnValue("value = 0", v64));
+  ASSERT_TRUE(parser.parseInt("value = 0", v64));
   EXPECT_EQ(0, v64);
-  ASSERT_TRUE(parser.parseAndReturnValue("value = -0", v64));
+  ASSERT_TRUE(parser.parseInt("value = -0", v64));
   EXPECT_EQ(0, v64);
-  ASSERT_TRUE(parser.parseAndReturnValue("value = -100", v64));
+  ASSERT_TRUE(parser.parseInt("value = -100", v64));
   EXPECT_EQ(-100, v64);
-  ASSERT_TRUE(parser.parseAndReturnValue("value = 0x1a", v64));
+  ASSERT_TRUE(parser.parseInt("value = 0x1a", v64));
   EXPECT_EQ(26, v64);
-  ASSERT_TRUE(parser.parseAndReturnValue("value = 0x1F", v64));
+  ASSERT_TRUE(parser.parseInt("value = 0x1F", v64));
   EXPECT_EQ(31, v64);
-  ASSERT_TRUE(parser.parseAndReturnValue("value = 0x0", v64));
+  ASSERT_TRUE(parser.parseInt("value = 0x0", v64));
   EXPECT_EQ(0, v64);
-  ASSERT_FALSE(parser.parseAndReturnValue("value = 100.123", v64));
-  ASSERT_FALSE(parser.parseAndReturnValue("value = '100", v64));
+  ASSERT_FALSE(parser.parseInt("value = 100.123", v64));
+  ASSERT_TRUE(parser.parseInt("value = '100'", v64));
+  EXPECT_EQ(100, v64);
 }
 
 TEST(ParserTest, ParsesDoubles) {
   P parser;
   double vDouble = 0.0;
-  ASSERT_TRUE(parser.parseAndReturnValue("value = 100.", vDouble));
+  ASSERT_TRUE(parser.parseDouble("value = 100.", vDouble));
   EXPECT_DOUBLE_EQ(100., vDouble);
-  ASSERT_TRUE(parser.parseAndReturnValue("value = 100.0000", vDouble));
+  ASSERT_TRUE(parser.parseDouble("value = 100.0000", vDouble));
   EXPECT_DOUBLE_EQ(100., vDouble);
-  ASSERT_TRUE(parser.parseAndReturnValue("value = 0.0000", vDouble));
+  ASSERT_TRUE(parser.parseDouble("value = 0.0000", vDouble));
   EXPECT_DOUBLE_EQ(0., vDouble);
-  ASSERT_TRUE(parser.parseAndReturnValue("value = -0.0000", vDouble));
+  ASSERT_TRUE(parser.parseDouble("value = -0.0000", vDouble));
   EXPECT_DOUBLE_EQ(0., vDouble);
-  ASSERT_TRUE(parser.parseAndReturnValue("value = 1.0e-2", vDouble));
+  ASSERT_TRUE(parser.parseDouble("value = 1.0e-2", vDouble));
   EXPECT_DOUBLE_EQ(0.01, vDouble);
-  ASSERT_TRUE(parser.parseAndReturnValue("value = 1.0E-2", vDouble));
+  ASSERT_TRUE(parser.parseDouble("value = 1.0E-2", vDouble));
   EXPECT_DOUBLE_EQ(0.01, vDouble);
-  ASSERT_TRUE(parser.parseAndReturnValue("value = 1e-2", vDouble));
+  ASSERT_TRUE(parser.parseDouble("value = 1e-2", vDouble));
   EXPECT_DOUBLE_EQ(0.01, vDouble);
-  ASSERT_TRUE(parser.parseAndReturnValue("value = 1E-2", vDouble));
+  ASSERT_TRUE(parser.parseDouble("value = 1E-2", vDouble));
   EXPECT_DOUBLE_EQ(0.01, vDouble);
-  ASSERT_FALSE(parser.parseAndReturnValue("value = 100", vDouble));
-  ASSERT_FALSE(parser.parseAndReturnValue("value = '100.0", vDouble));
+  ASSERT_TRUE(parser.parseDouble("value = 100", vDouble));
+  EXPECT_DOUBLE_EQ(100, vDouble);
+  ASSERT_TRUE(parser.parseDouble("value = '100.0'", vDouble));
+  EXPECT_DOUBLE_EQ(100, vDouble);
 }

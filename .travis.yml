@@ -10,7 +10,6 @@ matrix:
             - ubuntu-toolchain-r-test
           packages:
             - g++-8
-            - libboost-dev
     - os: linux
       dist: xenial
       env: BUILD_TYPE=Release LTO=On MATRIX_EVAL="CC=gcc-8 && CXX=g++-8"
@@ -20,7 +19,6 @@ matrix:
             - ubuntu-toolchain-r-test
           packages:
             - g++-8
-            - libboost-dev
 #    - os: linux
 #      dist: xenial
 #      compiler: clang

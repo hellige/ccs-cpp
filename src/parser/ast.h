@@ -1,9 +1,6 @@
 #ifndef CCS_PARSER_AST_H_
 #define CCS_PARSER_AST_H_
 
-#include <boost/lexical_cast.hpp>
-#include <boost/variant/recursive_variant.hpp>
-
 #include <memory>
 #include <string>
 #include <vector>
@@ -21,50 +18,44 @@ class BuildContext;
 
 namespace ast {
 
-// TODO it would be nice to clean up these structs a bit, now that we're not
-// using spirit and needing related contortions anymore...
+struct AstRule {
+  virtual ~AstRule() {}
+  virtual void addTo(std::shared_ptr<BuildContext> buildContext,
+    std::shared_ptr<BuildContext> baseContext) const = 0;
+  virtual bool resolveImports(ImportResolver &importResolver, Loader &loader,
+    std::vector<std::string> &inProgress) = 0;
 
-struct PropDef {
+};
+
+struct PropDef : AstRule {
   std::string name_;
   Value value_;
   Origin origin_;
   bool override_;
 
   PropDef() : override_(false) {}
+  void addTo(std::shared_ptr<BuildContext> buildContext,
+    std::shared_ptr<BuildContext> baseContext) const override;
+  bool resolveImports(ImportResolver &importResolver, Loader &loader,
+    std::vector<std::string> &inProgress) override;
 };
 
-
-struct Constraint {
+struct Constraint : AstRule {
   Key key_;
   explicit Constraint(const Key &key) : key_(key) {}
+  void addTo(std::shared_ptr<BuildContext> buildContext,
+    std::shared_ptr<BuildContext> baseContext) const override;
+  bool resolveImports(ImportResolver &importResolver, Loader &loader,
+    std::vector<std::string> &inProgress) override;
 };
-
-struct Import;
-struct Nested;
-
-typedef boost::variant<
-    PropDef,
-    Constraint,
-    boost::recursive_wrapper<Import>,
-    boost::recursive_wrapper<Nested>>
-  AstRule;
-
 
 struct SelectorLeaf {
   typedef std::shared_ptr<SelectorLeaf> P;
   virtual ~SelectorLeaf() {};
   virtual Node &traverse(std::shared_ptr<BuildContext> context) = 0;
 
-  // TODO these shouldn't be needed anymore?
-  static P desc(P left, P right)
-    { return left->descendant(left, right); }
-  static P conj(P left, P right)
-    { return left->conjunction(left, right); }
-  static P disj(P left, P right)
-    { return left->disjunction(left, right); }
   static P step(const Key &key);
 
-private:
   virtual P descendant(P left, P right) = 0;
   virtual P conjunction(P left, P right) = 0;
   virtual P disjunction(P left, P right) = 0;
@@ -82,23 +73,28 @@ struct SelectorBranch {
   static P disjunction(SelectorLeaf::P first);
 };
 
-
-struct Nested {
+struct Nested : AstRule {
   std::shared_ptr<SelectorBranch> selector_;
-  std::vector<AstRule> rules_;
+  std::vector<std::unique_ptr<AstRule>> rules_;
 
-  void addRule(const AstRule &rule) { rules_.push_back(rule); }
+  void addRule(std::unique_ptr<AstRule> rule) {
+    rules_.push_back(std::move(rule));
+  }
   void addTo(std::shared_ptr<BuildContext> buildContext,
-      std::shared_ptr<BuildContext> baseContext);
+      std::shared_ptr<BuildContext> baseContext) const override;
   bool resolveImports(ImportResolver &importResolver, Loader &loader,
-      std::vector<std::string> &inProgress);
+      std::vector<std::string> &inProgress) override;
 };
 
-struct Import {
+struct Import : AstRule {
   std::string location;
   Nested ast;
 
   explicit Import(const std::string &location) : location(location) {}
+  void addTo(std::shared_ptr<BuildContext> buildContext,
+    std::shared_ptr<BuildContext> baseContext) const override;
+  bool resolveImports(ImportResolver &importResolver, Loader &loader,
+    std::vector<std::string> &inProgress) override;
 };
 
 }}

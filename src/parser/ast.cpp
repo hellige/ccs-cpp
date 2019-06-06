@@ -1,7 +1,5 @@
 #include "parser/ast.h"
 
-#include <boost/variant.hpp>
-
 #include "ccs/domain.h"
 #include "dag/node.h"
 #include "parser/build_context.h"
@@ -9,76 +7,59 @@
 
 namespace ccs { namespace ast {
 
-struct AstVisitor : public boost::static_visitor<void> {
-  BuildContext::P buildContext;
-  BuildContext::P baseContext;
+void Import::addTo(BuildContext::P buildContext, BuildContext::P baseContext) const
+  { ast.addTo(buildContext, baseContext); }
+void PropDef::addTo(BuildContext::P buildContext, BuildContext::P) const
+  { buildContext->addProperty(*this); }
+void Constraint::addTo(BuildContext::P buildContext, BuildContext::P) const
+  { buildContext->node().addConstraint(key_); }
 
-  AstVisitor(BuildContext::P buildContext, BuildContext::P baseContext) :
-    buildContext(buildContext), baseContext(baseContext) {}
-  void operator()(Import &import) const
-    { import.ast.addTo(buildContext, baseContext); }
-  void operator()(PropDef &propDef) const
-    { buildContext->addProperty(propDef); }
-  void operator()(Constraint &constraint) const
-    { buildContext->node().addConstraint(constraint.key_); }
-  void operator()(Nested &nested) const
-    { nested.addTo(buildContext, baseContext); }
-};
+bool PropDef::resolveImports(ImportResolver &, Loader &,
+    std::vector<std::string> &)
+  { return true; }
+bool Constraint::resolveImports(ImportResolver &, Loader &,
+    std::vector<std::string> &)
+  { return true; }
 
-struct ImportVisitor : public boost::static_visitor<bool> {
-  ImportResolver &resolver;
-  Loader &loader;
-  std::vector<std::string> &inProgress;
-
-  ImportVisitor(ImportResolver &importResolver, Loader &loader,
-      std::vector<std::string> &inProgress) :
-    resolver(importResolver), loader(loader), inProgress(inProgress) {}
-  bool operator()(PropDef &) const
-    { return true; }
-  bool operator()(Constraint &) const
-    { return true; }
-  bool operator()(Nested &nested) const
-    { return nested.resolveImports(resolver, loader, inProgress); }
-
-  bool operator()(Import &import) const {
-    bool result = false;
-    if (std::find(inProgress.begin(), inProgress.end(), import.location) !=
-        inProgress.end()) {
+bool Import::resolveImports(ImportResolver &importResolver, Loader &loader,
+    std::vector<std::string> &inProgress) {
+  bool result = false;
+  if (std::find(inProgress.begin(), inProgress.end(), location) !=
+      inProgress.end()) {
+    std::ostringstream msg;
+    msg << "Circular import detected involving '" << location << "'";
+    loader.tracer().onParseError(msg.str());
+  } else {
+    inProgress.push_back(location);
+    result = importResolver.resolve(location,
+        [&](std::istream &stream) {
+      return loader.parseCcsStream(stream, location,
+          importResolver, inProgress, ast);
+    });
+    inProgress.pop_back();
+    if (!result) {
       std::ostringstream msg;
-      msg << "Circular import detected involving '" << import.location << "'";
+      msg << "Failed to resolve '" << location
+        << "'! (User-provided resolver returned false.)";
       loader.tracer().onParseError(msg.str());
-    } else {
-      inProgress.push_back(import.location);
-      result = resolver.resolve(import.location,
-          [this, &import](std::istream &stream) {
-        return this->loader.parseCcsStream(stream, import.location,
-            this->resolver, this->inProgress, import.ast);
-      });
-      inProgress.pop_back();
-      if (!result) {
-        std::ostringstream msg;
-        msg << "Failed to resolve '" << import.location
-          << "'! (User-provided resolver returned false.)";
-        loader.tracer().onParseError(msg.str());
-      }
     }
-    return result;
   }
-};
+  return result;
+}
 
-void Nested::addTo(BuildContext::P buildContext, BuildContext::P baseContext) {
+
+void Nested::addTo(BuildContext::P buildContext, BuildContext::P baseContext) const {
   BuildContext::P bc = buildContext;
   if (selector_)
     bc = selector_->traverse(buildContext, baseContext);
   for (auto it = rules_.begin(); it != rules_.end(); ++it)
-    boost::apply_visitor(AstVisitor(bc, baseContext), *it);
+    (*it)->addTo(bc, baseContext);
 }
 
 bool Nested::resolveImports(ImportResolver &importResolver, Loader &loader,
     std::vector<std::string> &inProgress) {
   for (auto it = rules_.begin(); it != rules_.end(); ++it)
-    if (!boost::apply_visitor(ImportVisitor(importResolver, loader, inProgress),
-        *it))
+    if (!(*it)->resolveImports(importResolver, loader, inProgress))
       return false;
   return true;
 }

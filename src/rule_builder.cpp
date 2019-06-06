@@ -6,18 +6,21 @@
 namespace ccs {
 
 struct RuleBuilder::Impl : std::enable_shared_from_this<Impl> {
-  ast::Nested ast;
+  std::unique_ptr<ast::Nested> ast;
+
+  Impl() : ast(new ast::Nested()) {}
 
   virtual ~Impl() {}
 
   void set(const std::string &name, const std::string &value) {
-    ast::PropDef def;
-    def.name_ = name;
-    def.value_.setString(StringVal(value));
-    ast.addRule(def);
+    auto def = std::make_unique<ast::PropDef>();
+    def->name_ = name;
+    def->value_.setString(StringVal(value));
+    ast->addRule(std::move(def));
   }
 
-  void add(const ast::Nested &child) { ast.addRule(child); }
+  void add(std::unique_ptr<ast::Nested> child)
+    { ast->addRule(std::move(child)); }
   std::shared_ptr<Impl> select(const std::string &name,
       const std::vector<std::string> &values);
   virtual std::shared_ptr<Impl> &pop() = 0;
@@ -27,7 +30,7 @@ struct RuleBuilder::Root : RuleBuilder::Impl {
   DagBuilder &dag;
 
   Root(DagBuilder &dag) : dag(dag) {}
-  ~Root() { ast.addTo(dag.buildContext(), dag.buildContext()); }
+  ~Root() { ast->addTo(dag.buildContext(), dag.buildContext()); }
   std::shared_ptr<Impl> &pop() { throw std::runtime_error("unmatched pop()!"); }
 };
 
@@ -38,11 +41,11 @@ struct RuleBuilder::Child : RuleBuilder::Impl {
   Child(const std::shared_ptr<Impl> &parent, const std::string &name,
       const std::vector<std::string> &values) : parent(parent) {
     Key key(name, values);
-    ast.selector_ = ast::SelectorBranch::disjunction(
+    ast->selector_ = ast::SelectorBranch::disjunction(
         ast::SelectorLeaf::step(key));
   }
 
-  ~Child() { parent->add(ast); }
+  ~Child() { parent->add(std::move(ast)); }
   std::shared_ptr<Impl> &pop() { return parent; }
 };
 

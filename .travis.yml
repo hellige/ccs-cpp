@@ -55,5 +55,5 @@ script:
   - cmake --build . -- -j2
   - ctest --output-on-failure -D ExperimentalBuild -j2
   - ctest --output-on-failure -D ExperimentalTest -j2
-  - '[[ -z "${GCOV}" ]] || bash <(curl -s https://codecov.io/bash) -x ${GCOV} -y ../.codecov.yml'
+  - '[[ -z "${GCOV}" ]] || bash <(curl -s https://codecov.io/bash) -x ${GCOV}'
 

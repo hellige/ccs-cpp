@@ -14,3 +14,8 @@ add_test(NAME Tests
         COMMAND Test
         WORKING_DIRECTORY ${CMAKE_CURRENT_BINARY_DIR})
 file(COPY ../tests.txt DESTINATION ${CMAKE_CURRENT_BINARY_DIR})
+
+add_custom_target(unittest Test
+        COMMENT "Running unittests\n\n"
+        VERBATIM
+        )

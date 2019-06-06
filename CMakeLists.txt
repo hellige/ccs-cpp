@@ -2,11 +2,11 @@ cmake_minimum_required(VERSION 3.9.1)
 
 project(ccs DESCRIPTION "ccs configuration library")
 
-set(BOOST_INCLUDEDIR include)
+option(COVERAGE "Build with code coverage enabled" OFF)
 
 set(CMAKE_CXX_STANDARD 14)
 set(CMAKE_CXX_STANDARD_REQUIRED ON)
-#set(CMAKE_CXX_EXTENSIONS OFF)
+set(CMAKE_CXX_EXTENSIONS OFF)
 
 # All the sanitizer flags in one place
 if ("${CMAKE_CXX_COMPILER_ID}" MATCHES "Clang")
@@ -25,6 +25,11 @@ set(CMAKE_CXX_FLAGS "${CMAKE_CXX_FLAGS} -fPIC -Wall -Wextra -Werror -g")
 
 # Debug flags
 set(CMAKE_CXX_FLAGS_DEBUG "${CMAKE_CXX_FLAGS_DEBUG} ${SANITIZE_FLAGS}")
+
+if (COVERAGE)
+    add_compile_options(--coverage -O0)
+    set(CMAKE_EXE_LINKER_FLAGS "${CMAKE_EXE_LINKER_FLAGS} --coverage")
+endif ()
 
 include(CTest)
 

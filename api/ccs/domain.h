@@ -1,5 +1,4 @@
-#ifndef CCS_DOMAIN_H_
-#define CCS_DOMAIN_H_
+#pragma once
 
 #include <functional>
 #include <memory>
@@ -72,6 +71,3 @@ public:
 };
 
 }
-
-
-#endif /* CCS_DOMAIN_H_ */

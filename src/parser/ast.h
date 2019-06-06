@@ -1,5 +1,4 @@
-#ifndef CCS_PARSER_AST_H_
-#define CCS_PARSER_AST_H_
+#pragma once
 
 #include <memory>
 #include <string>
@@ -98,6 +97,3 @@ struct Import : AstRule {
 };
 
 }}
-
-
-#endif /* CCS_PARSER_AST_H_ */

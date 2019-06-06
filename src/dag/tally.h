@@ -1,5 +1,4 @@
-#ifndef CCS_DAG_TALLY_H_
-#define CCS_DAG_TALLY_H_
+#pragma once
 
 #include <memory>
 
@@ -72,5 +71,3 @@ public:
 };
 
 }
-
-#endif /* CCS_DAG_TALLY_H_ */

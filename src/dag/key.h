@@ -1,5 +1,4 @@
-#ifndef CCS_DAG_KEY_H_
-#define CCS_DAG_KEY_H_
+#pragma once
 
 #include <algorithm>
 #include <map>
@@ -92,5 +91,3 @@ public:
 std::ostream &operator<<(std::ostream &out, const Key &key);
 
 }
-
-#endif /* CCS_DAG_KEY_H_ */

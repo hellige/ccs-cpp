@@ -1,5 +1,4 @@
-#ifndef CCS_TYPES_H_
-#define CCS_TYPES_H_
+#pragma once
 
 #include <ostream>
 #include <string>
@@ -31,5 +30,3 @@ struct CcsProperty {
 };
 
 }
-
-#endif /* CCS_TYPES_H_ */

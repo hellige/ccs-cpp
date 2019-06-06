@@ -1,5 +1,4 @@
-#ifndef CCS_DAG_PROPERTY_H_
-#define CCS_DAG_PROPERTY_H_
+#pragma once
 
 #include <cstdint>
 #include <iosfwd>
@@ -94,5 +93,3 @@ public:
 };
 
 }
-
-#endif /* CCS_DAG_PROPERTY_H_ */

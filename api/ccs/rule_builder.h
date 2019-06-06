@@ -1,5 +1,4 @@
-#ifndef CCS_RULE_BUILDER_H_
-#define CCS_RULE_BUILDER_H_
+#pragma once
 
 #include <memory>
 #include <string>
@@ -29,5 +28,3 @@ public:
 };
 
 }
-
-#endif /* CCS_RULE_BUILDER_H_ */

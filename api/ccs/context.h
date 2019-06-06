@@ -1,5 +1,4 @@
-#ifndef CCS_CONTEXT_H_
-#define CCS_CONTEXT_H_
+#pragma once
 
 #include <iosfwd>
 #include <memory>
@@ -177,5 +176,3 @@ public:
 };
 
 }
-
-#endif /* CCS_CONTEXT_H_ */

@@ -1,5 +1,4 @@
-#ifndef CCS_PARSER_BUILD_CONTEXT_H_
-#define CCS_PARSER_BUILD_CONTEXT_H_
+#pragma once
 
 #include <memory>
 
@@ -33,6 +32,3 @@ public:
 };
 
 }
-
-
-#endif /* CCS_PARSER_BUILD_CONTEXT_H_ */

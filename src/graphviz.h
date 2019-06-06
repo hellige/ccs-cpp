@@ -1,5 +1,4 @@
-#ifndef CCS_GRAPHVIZ_H_
-#define CCS_GRAPHVIZ_H_
+#pragma once
 
 #include <iosfwd>
 #include <map>
@@ -29,5 +28,3 @@ public:
 };
 
 }
-
-#endif

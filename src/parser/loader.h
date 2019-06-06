@@ -1,5 +1,4 @@
-#ifndef CCS_PARSER_LOADER_H_
-#define CCS_PARSER_LOADER_H_
+#pragma once
 
 #include <istream>
 #include <string>
@@ -41,7 +40,3 @@ public:
 
 
 }
-
-
-
-#endif /* CCS_PARSER_LOADER_H_ */

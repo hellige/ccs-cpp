@@ -1,5 +1,4 @@
-#ifndef CCS_DAG_NODE_H_
-#define CCS_DAG_NODE_H_
+#pragma once
 
 #include <map>
 #include <memory>
@@ -102,5 +101,3 @@ public:
 
 
 }
-
-#endif /* CCS_DAG_NODE_H_ */

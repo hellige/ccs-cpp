@@ -1,5 +1,4 @@
-#ifndef CCS_PARSER_PARSER_H_
-#define CCS_PARSER_PARSER_H_
+#pragma once
 
 #include <string>
 #include <istream>
@@ -23,6 +22,3 @@ public:
 };
 
 }
-
-
-#endif /* CCS_PARSER_PARSER_H_ */

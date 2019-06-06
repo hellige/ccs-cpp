@@ -1,5 +1,4 @@
-#ifndef CCS_DAG_DAG_BUILDER_H_
-#define CCS_DAG_DAG_BUILDER_H_
+#pragma once
 
 #include <memory>
 
@@ -25,6 +24,3 @@ public:
 };
 
 }
-
-
-#endif /* CCS_DAG_DAG_BUILDER_H_ */

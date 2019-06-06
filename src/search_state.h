@@ -1,5 +1,4 @@
-#ifndef CCS_SEARCH_STATE_H_
-#define CCS_SEARCH_STATE_H_
+#pragma once
 
 #include <iosfwd>
 #include <map>
@@ -143,5 +142,3 @@ private:
 };
 
 }
-
-#endif /* CCS_SEARCH_STATE_H_ */

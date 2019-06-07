@@ -48,5 +48,3 @@ link_directories(${PROJECT_BINARY_DIR}/lib)
 add_subdirectory(src)
 enable_testing()
 add_subdirectory(test)
-
-set(CMAKE_INSTALL_PREFIX ${PROJECT_BINARY_DIR}/dist)

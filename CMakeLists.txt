@@ -30,6 +30,7 @@ endif()
 set(CMAKE_CXX_FLAGS_DEBUG "${CMAKE_CXX_FLAGS_DEBUG} ${SANITIZE_FLAGS}")
 
 include(CTest)
+include(GNUInstallDirs)
 
 # Enable libtooling support
 set(CMAKE_EXPORT_COMPILE_COMMANDS ON)

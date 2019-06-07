@@ -255,7 +255,6 @@ private:
           interpolant += stream_.get();
         }
         stream_.get();
-        std::cout << "INTERP: [" << interpolant << "]\n";
         result.elements_.emplace_back(interpolant, true);
         break;
       }

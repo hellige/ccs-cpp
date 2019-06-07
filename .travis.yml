@@ -33,7 +33,7 @@ matrix:
     - name: Linux GCC 6 Release
       os: linux
       dist: xenial
-      env: BUILD_TYPE=Release LTO=On MATRIX_EVAL="CC=gcc-7 && CXX=g++-6"
+      env: BUILD_TYPE=Release LTO=On MATRIX_EVAL="CC=gcc-6 && CXX=g++-6"
       addons:
         apt:
           sources: *sources
@@ -50,11 +50,22 @@ matrix:
             - clang-8
             - libc++-8-dev
             - libc++abi-8-dev
+    - name: Linux Clang 7 Release
+      os: linux
+      dist: xenial
+      env: BUILD_TYPE=Release LTO=On MATRIX_EVAL="CC=clang-7 && CXX=clang++-7"
+      addons:
+        apt:
+          sources: *sources
+          packages:
+            - clang-7
+            - libc++-7-dev
+            - libc++abi-7-dev
     - name: OSX GCC 8 Release
       os: osx
       osx_image: xcode10.1
       env: BUILD_TYPE=Release MATRIX_EVAL="brew link --overwrite gcc && CC=gcc-8 && CXX=g++-8"
-    - name: OSX Clang Release
+    - name: OSX XCode 10.1 Release
       os: osx
       osx_image: xcode10.1
       env: BUILD_TYPE=Release

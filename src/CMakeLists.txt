@@ -27,29 +27,53 @@ set(CCS_SOURCE_FILES
 
 add_library(ccs_obj OBJECT ${CCS_SOURCE_FILES})
 target_include_directories(ccs_obj PRIVATE .)
-#set_target_properties(ccs_obj PROPERTIES PUBLIC_HEADER ../api)
+target_include_directories(ccs_obj PUBLIC
+    $<INSTALL_INTERFACE:${CMAKE_INSTALL_INCLUDEDIR}/>
+    $<BUILD_INTERFACE:${CMAKE_CURRENT_SOURCE_DIR}/.>
+)
 set_property(TARGET ccs_obj PROPERTY POSITION_INDEPENDENT_CODE TRUE)
 
 add_library(ccs STATIC $<TARGET_OBJECTS:ccs_obj>)
-add_library(ccs::ccs ALIAS ccs)
-#set_target_properties(ccs PROPERTIES PUBLIC_HEADER ../api)
+add_library(Ccs::ccs ALIAS ccs)
+target_include_directories(ccs PUBLIC
+    $<INSTALL_INTERFACE:${CMAKE_INSTALL_INCLUDEDIR}/>
+    $<BUILD_INTERFACE:${CMAKE_CURRENT_SOURCE_DIR}/.>
+)
 
 add_library(ccs_so SHARED $<TARGET_OBJECTS:ccs_obj>)
-add_library(ccs::ccs_so ALIAS ccs_so)
-#set_target_properties(ccs_so PROPERTIES PUBLIC_HEADER ../api)
+add_library(Ccs::ccs_so ALIAS ccs_so)
+target_include_directories(ccs_so PUBLIC
+    $<INSTALL_INTERFACE:${CMAKE_INSTALL_INCLUDEDIR}/>
+    $<BUILD_INTERFACE:${CMAKE_CURRENT_SOURCE_DIR}/.>
+)
+set_target_properties(ccs_so PROPERTIES OUTPUT_NAME ccs VERSION ${PROJECT_VERSION})
 
 install(TARGETS ccs ccs_so EXPORT ${PROJECT_NAME}Config
     LIBRARY DESTINATION ${CMAKE_INSTALL_LIBDIR}
     ARCHIVE DESTINATION ${CMAKE_INSTALL_LIBDIR}
     RUNTIME DESTINATION ${CMAKE_INSTALL_BINDIR}
 )
-# export for build tree.
+
+install(DIRECTORY ../api/ DESTINATION ${CMAKE_INSTALL_INCLUDEDIR})
+
+include(CMakePackageConfigHelpers)
+write_basic_package_version_file(
+    ${CMAKE_CURRENT_BINARY_DIR}/${PROJECT_NAME}ConfigVersion.cmake
+    VERSION ${PROJECT_VERSION}
+    COMPATIBILITY SameMajorVersion
+)
+
+install(FILES
+    ${CMAKE_CURRENT_BINARY_DIR}/${PROJECT_NAME}ConfigVersion.cmake
+    DESTINATION ${CMAKE_INSTALL_LIBDIR}/cmake/${PROJECT_NAME}/
+)
+
 export(
     TARGETS ccs ccs_so
     NAMESPACE ${PROJECT_NAME}::
     FILE ${PROJECT_BINARY_DIR}/${PROJECT_NAME}Config.cmake
 )
-# export for install.
+
 install(
   EXPORT ${PROJECT_NAME}Config
   FILE ${PROJECT_NAME}Config.cmake

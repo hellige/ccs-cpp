@@ -75,7 +75,7 @@ before_install:
 script:
   - mkdir out
   - cd out
-  - cmake -DCMAKE_BUILD_TYPE=${BUILD_TYPE} ${EXTRA_CMAKE} ..
+  - cmake -Wno-dev -DCMAKE_BUILD_TYPE=${BUILD_TYPE} ${EXTRA_CMAKE} ..
   - cmake --build . -- -j2
   - ctest --output-on-failure -D ExperimentalBuild -j2
   - ctest --output-on-failure -D ExperimentalTest -j2

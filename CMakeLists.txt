@@ -1,8 +1,12 @@
 cmake_minimum_required(VERSION 3.9.1)
 
-project(ccs DESCRIPTION "ccs configuration library")
+project(Ccs VERSION 0.9.18 DESCRIPTION "CCS configuration library")
 
 option(COVERAGE "Build with code coverage enabled" OFF)
+
+message(STATUS "${PROJECT_NAME} ${PROJECT_VERSION}")
+message(STATUS "Coverage: ${COVERAGE}")
+
 
 set(CMAKE_CXX_STANDARD 14)
 set(CMAKE_CXX_STANDARD_REQUIRED ON)
@@ -36,7 +40,7 @@ include(GNUInstallDirs)
 set(CMAKE_EXPORT_COMPILE_COMMANDS ON)
 
 # External libraries/dependencies
-add_subdirectory(external/googletest)
+add_subdirectory(external/googletest EXCLUDE_FROM_ALL)
 
 include_directories(api src)
 link_directories(${PROJECT_BINARY_DIR}/lib)

@@ -10,6 +10,7 @@ matrix:
           sources: &sources
             - ubuntu-toolchain-r-test
             - llvm-toolchain-xenial-8
+            - llvm-toolchain-xenial-7
           packages:
             - g++-8
     - name: Linux GCC 8 Release

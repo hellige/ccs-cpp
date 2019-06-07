@@ -1,5 +1,4 @@
 if (COVERAGE)
-    add_compile_options(--coverage -O0)
     set(CMAKE_EXE_LINKER_FLAGS "${CMAKE_EXE_LINKER_FLAGS} --coverage")
 endif ()
 

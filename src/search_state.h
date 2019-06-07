@@ -97,7 +97,7 @@ public:
 
     if (it == properties.end()) {
       // we don't have a local setting for this yet.
-      auto parentProperty = parent ? parent->checkCache(propertyName) : NULL;
+      auto parentProperty = parent ? parent->checkCache(propertyName) : nullptr;
       if (parentProperty) {
         if (parentProperty->better(newSetting))
           // parent copy found, parent property better, leave local cache empty.
@@ -126,7 +126,7 @@ public:
   const PropertySetting *checkCache(const std::string &propertyName) const {
     auto it = properties.find(propertyName);
     if (it != properties.end()) return &it->second;
-    if (!parent) return NULL;
+    if (!parent) return nullptr;
     return parent->checkCache(propertyName);
   }
 

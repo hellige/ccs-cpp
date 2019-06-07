@@ -21,7 +21,10 @@ else ()
 endif ()
 
 # Common flags shared across all builds
-set(CMAKE_CXX_FLAGS "${CMAKE_CXX_FLAGS} -fPIC -Wall -Wextra -Werror -g")
+set(CMAKE_CXX_FLAGS "${CMAKE_CXX_FLAGS} -Wall -Wextra -Werror -g")
+if ("${CMAKE_CXX_COMPILER_ID}" MATCHES "Clang")
+    set(CMAKE_CXX_FLAGS "${CMAKE_CXX_FLAGS} -Wno-mismatched-tags")
+endif()
 
 # Debug flags
 set(CMAKE_CXX_FLAGS_DEBUG "${CMAKE_CXX_FLAGS_DEBUG} ${SANITIZE_FLAGS}")
@@ -34,7 +37,6 @@ set(CMAKE_EXPORT_COMPILE_COMMANDS ON)
 # External libraries/dependencies
 add_subdirectory(external/googletest)
 
-# au configuration
 include_directories(api src)
 link_directories(${PROJECT_BINARY_DIR}/lib)
 

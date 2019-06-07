@@ -81,7 +81,7 @@ const CcsProperty *SearchState::doSearch(const CcsContext &context,
   auto it = properties.find(propertyName);
   if (it == properties.end()) {
     if (parent) return parent->doSearch(context, propertyName);
-    return NULL;
+    return nullptr;
   }
 
   if (it->second.values.size() == 1)

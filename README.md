@@ -12,6 +12,26 @@ without someone talking along with it.
 [1]: http://github.com/hellige/ccs
 [2]: http://hellige.github.io/ccs
 
+
+Building
+--------
+
+CCS is built with CMake. You can set the usual options to control your
+compiler, build type, etc., but the crash course is:
+
+    $ mkdir build
+    $ cd build
+    $ cmake ..
+    $ make
+
+You can run unit tests with pretty output using:
+
+    $ make unittest
+
+CMake can install everything for you, but in any case the client-facing
+headers are in the `api` directory.
+
+
 Syntax quick reference
 ----------------------
 

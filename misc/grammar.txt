@@ -30,7 +30,7 @@ val        ::= INT | DOUBLE | BOOL | STRING
 
 
 // without precedence...
-selector   ::= sel '>'?
+selector   ::= step '>'?
 step       ::= step op step
              | singlestep step
              | singlestep

@@ -252,3 +252,19 @@ TEST(CcsTest, FalseConflict) {
   EXPECT_EQ("bar", ctx.constrain("a").constrain("b").constrain("a")
       .getString("foo"));
 }
+
+TEST(CcsTest, Graphviz) {
+  CcsDomain ccs(std::make_shared<FailingLogger>());
+  ccs.ruleBuilder()
+    .select("a").select("b").set("p1", "1").pop()
+    .select("b").set("p2", "2");
+
+  std::ostringstream out;
+  ccs.logRuleDag(out);
+
+  // TODO is there anything useful that can be done here? the graph
+  // itself is probably dependent on the hash order of pointers and thus
+  // nondeterministic... here's something dumb w can verify...
+  EXPECT_NE(std::string::npos, out.str().find("p1 = 1"));
+  EXPECT_NE(std::string::npos, out.str().find("p2 = 2"));
+}

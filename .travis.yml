@@ -62,7 +62,7 @@ matrix:
             - clang-7
             - libc++-7-dev
             - libc++abi-7-dev
-    - name: OSX GCC 8 Release
+    - name: OSX GCC 9 Release
       os: osx
       osx_image: xcode10.1
       env: BUILD_TYPE=Release MATRIX_EVAL="brew link --overwrite gcc && CC=gcc-9 && CXX=g++-9"

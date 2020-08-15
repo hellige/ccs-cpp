@@ -7,7 +7,12 @@
 CCS for C++
 ===========
 
-This is a C++ implementation of [CCS][1]. 
+This is the C++ implementation of [CCS][1].
+
+CCS is a language for config files, and libraries to read those files and
+configure applications. The documentation is currently quite poor, but the
+[Java][1] and C++ implementations are mature and have been used in production
+for many years.
 
 There's a presentation about the language [here][2], but it's a little sketchy
 without someone talking along with it.

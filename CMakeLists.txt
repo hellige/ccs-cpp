@@ -1,6 +1,6 @@
 cmake_minimum_required(VERSION 3.9.1)
 
-project(Ccs VERSION 0.9.19 DESCRIPTION "CCS configuration library")
+project(Ccs VERSION 0.9.20 DESCRIPTION "CCS configuration library")
 
 option(COVERAGE "Build with code coverage enabled" OFF)
 

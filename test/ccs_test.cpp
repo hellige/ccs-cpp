@@ -195,6 +195,21 @@ TEST(CcsTest, DomainBuilder) {
   EXPECT_EQ("base", ctx.constrain("c").getString("a"));
 }
 
+TEST(CcsTest, DomainBuilderNestedSelect) {
+  CcsDomain ccs;
+  ccs.ruleBuilder()
+      .set("a", "base")
+      .select("a", v("b"))
+        .select("c", v("d"))
+          .set("a", "123");
+  CcsContext ctx = ccs.build();
+  EXPECT_EQ("base", ctx.getString("a"));
+  EXPECT_EQ("base", ctx.constrain("a", v("b")).getString("a"));
+  EXPECT_EQ("base", ctx.constrain("c", v("d")).getString("a"));
+  EXPECT_EQ("123", ctx.constrain("a", v("b")).constrain("c", v("d"))
+          .getString("a"));
+}
+
 TEST(CcsTest, Coercion) {
   CcsDomain ccs;
   ccs.ruleBuilder()

@@ -41,7 +41,7 @@ struct RuleBuilder::Child : RuleBuilder::Impl {
   Child(const std::shared_ptr<Impl> &parent, const std::string &name,
       const std::vector<std::string> &values) : parent(parent) {
     Key key(name, values);
-    ast->selector_ = ast::SelectorBranch::disjunction(
+    ast->selector_ = ast::SelectorBranch::conjunction(
         ast::SelectorLeaf::step(key));
   }
 

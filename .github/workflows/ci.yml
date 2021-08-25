@@ -1,0 +1,42 @@
+name: CI
+
+on:
+  push:
+    branches: [ master ]
+  pull_request:
+    branches: [ master ]
+  workflow_dispatch:
+
+jobs:
+  build:
+    name: ${{ matrix.config.name }}
+    runs-on: ${{ matrix.config.os }}
+    strategy:
+      fail-fast: false
+      matrix:
+        include:
+          - name: Linux GCC 8 Debug/Coverage
+            os: ubuntu-latest
+            env: BUILD_TYPE=Debug EXTRA_CMAKE=-DCOVERAGE=On GCOV=gcov-8 CC=gcc-8 CXX=g++-8"
+            #sources: &sources
+            #  - ubuntu-toolchain-r-test
+              #- llvm-toolchain-xenial-8
+              #- llvm-toolchain-xenial-7
+            packages: g++-8
+
+    steps:
+    - uses: actions/checkout@v2
+    - name: Install dependencies
+      run: |
+        sudo add-apt-repository ppa:ubuntu-toolchain-r/test
+        sudo apt-get install ${{ matrix.packages }}
+    - name: "cmake build"
+      run: |
+        eval ${{ matrix.env }}
+        mkdir out
+        cd out
+        cmake -Wno-dev -DCMAKE_BUILD_TYPE=${BUILD_TYPE} ${EXTRA_CMAKE} ..
+        cmake --build . -- -j2
+        ctest --output-on-failure -D ExperimentalBuild -j2
+        ctest --output-on-failure -D ExperiementalText -j2
+        #'[[ -z "$GCOV}" ]] || bash <(curl -s https://codecov.io/bash) -x ${GCOV}'

@@ -17,7 +17,7 @@ jobs:
         include:
           - name: Linux GCC 8 Debug/Coverage
             os: ubuntu-latest
-            env: BUILD_TYPE=Debug EXTRA_CMAKE=-DCOVERAGE=On GCOV=gcov-8 CC=gcc-8 CXX=g++-8"
+            env: BUILD_TYPE=Debug EXTRA_CMAKE=-DCOVERAGE=On GCOV=gcov-8 CC=gcc-8 CXX=g++-8
             #sources: &sources
             #  - ubuntu-toolchain-r-test
               #- llvm-toolchain-xenial-8

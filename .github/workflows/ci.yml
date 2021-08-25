@@ -35,10 +35,6 @@ jobs:
             os: ubuntu-latest
             env: BUILD_TYPE=Release CC=gcc-9 CXX=g++-9
             packages: g++-9
-          - name: Linux GCC 6 Release
-            os: ubuntu-latest
-            env: BUILD_TYPE=Release CC=gcc-6 CXX=g++-6
-            packages: g++-6
 
     steps:
     - uses: actions/checkout@v2

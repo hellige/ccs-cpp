@@ -15,14 +15,30 @@ jobs:
       fail-fast: false
       matrix:
         include:
-          - name: Linux GCC 8 Debug/Coverage
+          - name: Linux GCC 11 Debug/Coverage
             os: ubuntu-latest
-            env: BUILD_TYPE=Debug EXTRA_CMAKE=-DCOVERAGE=On GCOV=gcov-8 CC=gcc-8 CXX=g++-8
+            env: BUILD_TYPE=Debug EXTRA_CMAKE=-DCOVERAGE=On GCOV=gcov-11 CC=gcc-11 CXX=g++-11
             #sources: &sources
             #  - ubuntu-toolchain-r-test
               #- llvm-toolchain-xenial-8
               #- llvm-toolchain-xenial-7
-            packages: g++-8
+            packages: g++-11
+          - name: Linux GCC 11 Release
+            os: ubuntu-latest
+            env: BUILD_TYPE=Release CC=gcc-11 CXX=g++-11
+            packages: g++-11
+          - name: Linux GCC 10 Release
+            os: ubuntu-latest
+            env: BUILD_TYPE=Release CC=gcc-10 CXX=g++-10
+            packages: g++-10
+          - name: Linux GCC 9 Release
+            os: ubuntu-latest
+            env: BUILD_TYPE=Release CC=gcc-9 CXX=g++-9
+            packages: g++-9
+          - name: Linux GCC 6 Release
+            os: ubuntu-latest
+            env: BUILD_TYPE=Release CC=gcc-6 CXX=g++-6
+            packages: g++-6
 
     steps:
     - uses: actions/checkout@v2
@@ -40,5 +56,5 @@ jobs:
         cmake -Wno-dev -DCMAKE_BUILD_TYPE=${BUILD_TYPE} ${EXTRA_CMAKE} ..
         cmake --build . -- -j2
         ctest --output-on-failure -D ExperimentalBuild -j2
-        ctest --output-on-failure -D ExperiementalTest -j2
+        ctest --output-on-failure -D ExperimentalTest -j2
         #'[[ -z "$GCOV}" ]] || bash <(curl -s https://codecov.io/bash) -x ${GCOV}'

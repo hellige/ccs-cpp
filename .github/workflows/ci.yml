@@ -40,5 +40,5 @@ jobs:
         cmake -Wno-dev -DCMAKE_BUILD_TYPE=${BUILD_TYPE} ${EXTRA_CMAKE} ..
         cmake --build . -- -j2
         ctest --output-on-failure -D ExperimentalBuild -j2
-        ctest --output-on-failure -D ExperiementalText -j2
+        ctest --output-on-failure -D ExperiementalTest -j2
         #'[[ -z "$GCOV}" ]] || bash <(curl -s https://codecov.io/bash) -x ${GCOV}'

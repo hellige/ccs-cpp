@@ -1,4 +1,4 @@
-[![Build status](https://travis-ci.org/hellige/ccs-cpp.svg?branch=master)](https://travis-ci.org/hellige/ccs-cpp)
+[![Build status](https://github.com/hellige/ccs-cpp/actions/workflows/ci.yml/badge.svg)](https://github.com/hellige/ccs-cpp/actions?workflow=CI)
 [![Code coverage](https://codecov.io/gh/hellige/ccs-cpp/branch/master/graph/badge.svg)](https://codecov.io/gh/hellige/ccs-cpp)
 [![GitHub release](https://img.shields.io/github/v/release/hellige/ccs-cpp?include_prereleases&sort=semver)](https://github.com/hellige/ccs-cpp/releases)
 [![GitHub license](https://img.shields.io/github/license/hellige/ccs-cpp)](https://github.com/hellige/ccs-cpp/blob/master/LICENSE)

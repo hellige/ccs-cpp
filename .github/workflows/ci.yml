@@ -55,4 +55,4 @@ jobs:
         ctest --output-on-failure -D ExperimentalTest -j2
     - name: Codecov Upload
       uses: codecov/codecov-action@v2
-      if: contains(matrix.name, "Coverage")
+      if: contains(matrix.name, 'Coverage')

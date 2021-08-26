@@ -176,6 +176,6 @@ TEST_P(AcceptanceTests, Load) {
 
 }
 
-INSTANTIATE_TEST_CASE_P(Run,
+INSTANTIATE_TEST_SUITE_P(Run,
     AcceptanceTests,
     ::testing::ValuesIn(AcceptanceTests::loadValues()));

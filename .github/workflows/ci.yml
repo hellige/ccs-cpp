@@ -16,38 +16,43 @@ jobs:
       fail-fast: false
       matrix:
         include:
-          - name: Linux GCC 11 Debug/Coverage
-            os: ubuntu-latest
-            env: BUILD_TYPE=Debug EXTRA_CMAKE=-DCOVERAGE=On GCOV=gcov-11 CC=gcc-11 CXX=g++-11
+          #- name: Linux GCC 11 Debug/Coverage
+          #  os: ubuntu-latest
+          #  env: BUILD_TYPE=Debug EXTRA_CMAKE=-DCOVERAGE=On GCOV=gcov-11 CC=gcc-11 CXX=g++-11
             #sources: &sources
             #  - ubuntu-toolchain-r-test
               #- llvm-toolchain-xenial-8
               #- llvm-toolchain-xenial-7
-            packages: g++-11
-          - name: Linux GCC 11 Release
-            os: ubuntu-latest
-            env: BUILD_TYPE=Release CC=gcc-11 CXX=g++-11
-            packages: g++-11
+          #  packages: g++-11
+          #- name: Linux GCC 11 Release
+          #  os: ubuntu-latest
+          #  env: BUILD_TYPE=Release LTO=On CC=gcc-11 CXX=g++-11
+          #  packages: g++-11
           - name: Linux GCC 10 Release
             os: ubuntu-latest
-            env: BUILD_TYPE=Release CC=gcc-10 CXX=g++-10
-            packages: g++-10
+            env: BUILD_TYPE=Release LTO=On CC=gcc-10 CXX=g++-10
+            #packages: g++-10
           - name: Linux GCC 9 Release
             os: ubuntu-latest
-            env: BUILD_TYPE=Release CC=gcc-9 CXX=g++-9
-            packages: g++-9
+            env: BUILD_TYPE=Release LTO=On CC=gcc-9 CXX=g++-9
+            #packages: g++-9
+          - name: Linux Clang 12 Release
+            os: ubuntu-latest
+            env: BUILD_TYPE=Release LTO=On CC=clang-12 CXX=clang++-12
 
     steps:
     - uses: actions/checkout@v2
       with:
         submodules: true
-    - name: Install dependencies
-      run: |
-        sudo add-apt-repository ppa:ubuntu-toolchain-r/test
-        sudo apt-get install ${{ matrix.packages }}
+    #- name: Install dependencies
+      #run: |
+        #sudo add-apt-repository ppa:ubuntu-toolchain-r/test
+        #sudo apt-get install ${{ matrix.packages }}
     - name: "cmake build"
       run: |
-        eval export ${{ matrix.env }}
+        eval ${{ matrix.env }}
+        export CC
+        export CXX
         mkdir out
         cd out
         cmake -Wno-dev -DCMAKE_BUILD_TYPE=${BUILD_TYPE} ${EXTRA_CMAKE} ..

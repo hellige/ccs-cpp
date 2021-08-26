@@ -1,3 +1,5 @@
 ignore:
   - "external/**/*"
+  # seems like you shouldn't need both of these, but you do...
   - "test/*"
+  - "test/**/*"

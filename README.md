@@ -27,6 +27,7 @@ Building
 CCS is built with CMake. You can set the usual options to control your
 compiler, build type, etc., but the crash course is:
 
+    $ git submodule update --init
     $ mkdir build
     $ cd build
     $ cmake ..

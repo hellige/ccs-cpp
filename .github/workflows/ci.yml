@@ -53,9 +53,7 @@ jobs:
         cmake --build . -- -j2
         ctest --output-on-failure -D ExperimentalBuild -j2
         ctest --output-on-failure -D ExperimentalTest -j2
-    - name: Run gcov
-      if: contains(matrix.name, 'Coverage')
-      run: find . -type f -name '*.gcno' -exec $GCOV -pb
+        [[ -z "${GCOV}" ]] || find . -type f -name '*.gcno' -exec ${GCOV} -pb '{}' +
     - name: Codecov Upload
       if: contains(matrix.name, 'Coverage')
       uses: codecov/codecov-action@v2

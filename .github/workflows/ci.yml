@@ -7,6 +7,7 @@ on:
     branches: [ master ]
   workflow_dispatch:
 
+
 jobs:
   build:
     name: ${{ matrix.name }}
@@ -46,7 +47,7 @@ jobs:
         sudo apt-get install ${{ matrix.packages }}
     - name: "cmake build"
       run: |
-        eval ${{ matrix.env }}
+        eval export ${{ matrix.env }}
         mkdir out
         cd out
         cmake -Wno-dev -DCMAKE_BUILD_TYPE=${BUILD_TYPE} ${EXTRA_CMAKE} ..

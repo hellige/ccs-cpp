@@ -43,7 +43,7 @@ jobs:
     - uses: actions/checkout@v2
       with:
         submodules: true
-    - name: "cmake build"
+    - name: CMake Build
       run: |
         eval ${{ matrix.env }}
         export CC CXX
@@ -53,4 +53,6 @@ jobs:
         cmake --build . -- -j2
         ctest --output-on-failure -D ExperimentalBuild -j2
         ctest --output-on-failure -D ExperimentalTest -j2
-        #'[[ -z "$GCOV}" ]] || bash <(curl -s https://codecov.io/bash) -x ${GCOV}'
+    - name: Codecov Upload
+      uses: codecov/codecov-action@v2
+      if: contains(matrix.name, "Coverage")

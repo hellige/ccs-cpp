@@ -24,15 +24,15 @@ jobs:
           - name: Linux GCC 9 Release
             os: ubuntu-latest
             env: BUILD_TYPE=Release LTO=On CC=gcc-9 CXX=g++-9
+          - name: Linux Clang 14 Release
+            os: ubuntu-latest
+            env: BUILD_TYPE=Release LTO=On CC=clang-12 CXX=clang++-14
+          - name: Linux Clang 13 Release
+            os: ubuntu-latest
+            env: BUILD_TYPE=Release LTO=On CC=clang-11 CXX=clang++-13
           - name: Linux Clang 12 Release
             os: ubuntu-latest
-            env: BUILD_TYPE=Release LTO=On CC=clang-12 CXX=clang++-12
-          - name: Linux Clang 11 Release
-            os: ubuntu-latest
-            env: BUILD_TYPE=Release LTO=On CC=clang-11 CXX=clang++-11
-          - name: Linux Clang 10 Release
-            os: ubuntu-latest
-            env: BUILD_TYPE=Release LTO=On CC=clang-10 CXX=clang++-10
+            env: BUILD_TYPE=Release LTO=On CC=clang-10 CXX=clang++-12
           - name: OSX GCC 11 Release
             os: macos-latest
             env: BUILD_TYPE=Release CC=gcc-11 CXX=g++-11
